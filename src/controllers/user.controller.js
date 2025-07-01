@@ -11,7 +11,7 @@ const generateAccessAndRefreshTokens = async (userId, role) => {
     try {
         let user;
 
-        if (role === "superadmin") {
+        if (role === "superAdmin") {
             user = await SuperAdmin.findById(userId);
         } else if (role === "frenchies") {
             user = await Frenchies.findById(userId);
@@ -93,7 +93,7 @@ export const userLogin = asyncHandler(async (req, res) => {
 
         const isPasswordValid = await user.isPasswordCorrect(password);
         if (!isPasswordValid) throw new ApiError(401, "Invalid credentials for SuperAdmin");
-        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id,user.role);
 
         const loggedInUser = await SuperAdmin.findById(user._id).select("-password -refreshToken");
         const options = {
@@ -133,7 +133,7 @@ export const userLogin = asyncHandler(async (req, res) => {
         user = await User.create({ phone, role: "customer" });
     }
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id,user.role);
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
