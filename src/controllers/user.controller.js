@@ -391,7 +391,6 @@ export const getSingleFrenchies = asyncHandler(async (req, res) => {
 
 
 export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
-    console.log(req.body)
     const { action, frenchiesID, updateData,status } = req.body;
     if (!action || !frenchiesID) {
         throw new ApiError(400, "Action and FrenchiesID are required.");
