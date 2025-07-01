@@ -151,7 +151,7 @@ export const userLogin = asyncHandler(async (req, res) => {
 
 
 export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
-    const { phone, email, address, city, state, country } = req.body;
+    const { name,phone, email, address, city, state, country } = req.body;
     if (!phone || !email || !address) {
         throw new ApiError(400, "Email and Password is missing")
     }
@@ -163,6 +163,7 @@ export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
 
     const newAdmin = await Frenchies.create({
         frenchiesID: frenchiesID,
+        frenchieName:name,
         phone,
         email,
         address,
@@ -378,9 +379,20 @@ export const getAllFrenchies = asyncHandler(async (req, res) => {
         data: result.docs
     });
 });
+// get frenchies by id
+export const getSingleFrenchies = asyncHandler(async (req, res) => {
+    const frenchyId = req.params.id;
+    const frenchies = await Frenchies.findById(frenchyId);
+    if (!frenchies) {
+        throw new ApiError(404, "Frenchies not found");
+    }
+    return res.status(200).json(new ApiResponse(200, frenchies, "Frenchies fetched successfully"));
+});
+
 
 export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
-    const { action, frenchiesID, updateData } = req.body;
+    console.log(req.body)
+    const { action, frenchiesID, updateData,status } = req.body;
     if (!action || !frenchiesID) {
         throw new ApiError(400, "Action and FrenchiesID are required.");
 
@@ -391,6 +403,15 @@ export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
 
     }
     switch (action) {
+        case "status":
+            if (!status || !["Approved", "Rejected", "Pending"].includes(status)) {
+                throw new ApiError(400, "Valid status (Approved, Rejected, Pending) is required.");
+            }
+            frenchies.status = status;
+            await frenchies.save();
+            return res.status(200).json(
+                new ApiResponse(200, frenchies, `Frenchies status updated to ${status}.`)
+            );
         case "toggleStatus":
             frenchies.isActivated = !frenchies.isActivated;
             await frenchies.save();
@@ -428,3 +449,6 @@ export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
 
 
 })
+
+
+// get single frenchies

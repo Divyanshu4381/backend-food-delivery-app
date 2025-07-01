@@ -25,7 +25,15 @@ const frenchiesSchema = new mongoose.Schema({
     frenchiesID: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        index: true
+    },
+    frenchieName: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true
+
     },
     email: {
         type: String,
@@ -74,9 +82,23 @@ const frenchiesSchema = new mongoose.Schema({
     refreshToken: {
         type: String,
     },
+    product: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }],
+    salesCount: {
+        type: Number,
+        default: 0
+    },
+    status:{
+        type:String,
+        enum:["Approved","Rejected","Pending"],
+        default:"Pending"
+    },
+
     isActivated: {
         type: Boolean,
-        default: true
+        default: false
     }
 
 
@@ -190,7 +212,7 @@ const Frenchies = mongoose.model('Frenchies', frenchiesSchema);
 
 superAdminSchema.plugin(mongooseAggregatePaginate);
 const SuperAdmin = mongoose.model('SuperAdmin', superAdminSchema)
-    
+
 
 
 
