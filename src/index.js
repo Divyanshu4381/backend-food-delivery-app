@@ -7,7 +7,7 @@ import userRoutes from './routes/user.routes.js'
 import cors from "cors"
 
 const corsOptions={
-    origin:`${process.env.BASE_URL}`,
+    origin:`${process.env.BASE_URL}||*`,
     credentials:true,
 }
 app.use(cors(corsOptions))
