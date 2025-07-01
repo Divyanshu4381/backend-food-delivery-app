@@ -8,7 +8,7 @@ import cors from "cors"
 import cookieParser from 'cookie-parser';
 
 const corsOptions={
-    origin:`${process.env.BASE_URL}||*`,
+    origin:`${process.env.BASE_URL}`||"*",
     credentials:true,
 }
 app.use(cors(corsOptions))

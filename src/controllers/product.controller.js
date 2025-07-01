@@ -100,3 +100,49 @@ export const deleteProduct = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, null, "Product deleted (soft delete) successfully"));
 });
+
+export const getProductById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const product = await Product.aggregate([
+        {
+            $match: { _id: new mongoose.Types.ObjectId(id) }  // ✅ Match by ID
+        },
+        {
+            $lookup: {
+                from: "categories",                      // ✅ Replace with your actual collection name
+                localField: "category",
+                foreignField: "_id",
+                as: "categoryDetails"
+            }
+        },
+        {
+            $lookup: {
+                from: "frenchies",                       // ✅ Replace with your actual collection name
+                localField: "Frenchies",
+                foreignField: "_id",
+                as: "frenchiesDetails"
+            }
+        },
+        {
+            $unwind: {
+                path: "$categoryDetails",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $unwind: {
+                path: "$frenchiesDetails",
+                preserveNullAndEmptyArrays: true
+            }
+        }
+    ]);
+
+    if (!product || product.length === 0) {
+        throw new ApiError(404, "Product not found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, product[0], "Product fetched successfully"));
+});
