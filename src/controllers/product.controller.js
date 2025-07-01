@@ -5,14 +5,18 @@ import { Product } from "../models/product.model.js";
 import { uploadOnCloudinary } from "../config/cloudinary.js";
 import mongoose from "mongoose";
 export const createProduct=asyncHandler(async(req,res)=>{
-    const {name,description,price, quantityAvailable,category,Frenchies,isAvailable,preparationTime,
+    const {name,description,price, stock,category,preparationTime,
         
     } = req.body;
-    if (!name || !price || !category || !Frenchies) {
+    if (!name || !price || !category ) {
         throw new ApiError(400, "Product name, image, price, category, and Frenchies are required");
     }
+    const frenchiesId =req.user?._id;
+    if(!frenchiesId){
+        throw new ApiError(404,"Frenchies not found")
+    }
+
     const imageLocalPath = req.file?.path;
-    ;
     if (!imageLocalPath) {
         throw new ApiError(400, "Image is required")
     }
@@ -25,11 +29,9 @@ export const createProduct=asyncHandler(async(req,res)=>{
         description,
         image:image.url,
         price,
-        quantityAvailable,
+        stock,
         category,
-        Frenchies,
-        isAvailable,
-        preparationTime
+        Frenchies:frenchiesId,
     });
 return res.status(201).json(
         new ApiResponse(201, product, "Product created successfully")
@@ -77,14 +79,9 @@ export const updateProduct = asyncHandler(async (req, res) => {
         "description",
         "image",
         "price",
-        "discountPrice",
-        "quantityAvailable",
+        "stock",
         "category",
-        "Frenchies",
-        "isAvailable",
-        "preparationTime",
-        "rating",
-        "gst"
+        
     ];
 
     updatableFields.forEach((field) => {

@@ -16,7 +16,7 @@ export const createCategory = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Category with this name already exists");
     }
     const imageLocalPath = req.file?.path;
-    ;
+    
     if (!imageLocalPath) {
         throw new ApiError(400, "Image is required")
     }
@@ -31,7 +31,7 @@ export const createCategory = asyncHandler(async (req, res) => {
 
 
 export const getAllCategories = asyncHandler(async (req, res) => {
-    const categories = await Category.find({ isActive: true });
+    const categories = await Category.find({});
 
     return res
         .status(200)
@@ -40,16 +40,20 @@ export const getAllCategories = asyncHandler(async (req, res) => {
 
 export const updateCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { name, image, } = req.body;
+    const { name } = req.body;
 
     const category = await Category.findById(id);
     if (!category) {
         throw new ApiError(404, "Category not found");
     }
-
+    const imageLocalPath = req.file?.path;
+    let image;
+    if (imageLocalPath) {
+        image = await uploadOnCloudinary(imageLocalPath)
+    }
     // Update fields if provided
     if (name) category.name = name;
-    if (image) category.image = image;
+    if(image) category.image=image;
 
     await category.save();
 
@@ -58,6 +62,19 @@ export const updateCategory = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, category, "Category updated successfully"));
 });
 
+export const getCategoryById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const category = await Category.findById(id);
+    if (!category) {
+        throw new ApiError(404, "Category not found");
+    }
+
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, category, "Category deleted (soft delete) successfully"));
+});
 export const deleteCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
 

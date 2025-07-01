@@ -11,6 +11,6 @@ router.get('/getallproduct',verifyJWT,authorizeRoles("frenchies"),getAllProducts
 router.get('/getproductbyid/:id',verifyJWT,authorizeRoles("frenchies"),getProductById)
 
 router.put('/updateproduct/:id',verifyJWT,authorizeRoles("frenchies"),upload.single('image'),updateProduct)
-router.delete('/deleteproduct',verifyJWT,authorizeRoles("frenchies"),deleteProduct)
+router.delete('/deleteproduct/:id',verifyJWT,authorizeRoles("frenchies"),deleteProduct)
 
 export default router;

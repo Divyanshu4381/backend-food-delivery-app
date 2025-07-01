@@ -18,30 +18,22 @@ const productSchema = new mongoose.Schema({
         required: [true, "Product price is required"]
     },
     
-    quantityAvailable: {
-        type: Number,
-        default: 0
+    stock: {
+        type: String,
+        enum:["In Stock","Out Stock"],
+        default: "In Stock"
     },
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Category",   // Category Model (Ex: Burger, Drinks)
-        required: true
     },
     Frenchies: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Frenchies", 
         required: true
     },
-    isAvailable: {
-        type: Boolean,
-        default: true
-    },
-    preparationTime: {
-        type: Number,
-        default: 10, // Minutes
-        min: 1
-    }
     
+ 
 }, { timestamps: true });
 
 export const Product = mongoose.model('Product', productSchema);
