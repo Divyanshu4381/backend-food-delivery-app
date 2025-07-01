@@ -99,7 +99,7 @@ export const userLogin = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,
             secure: true,
-            sameSite:none,
+            sameSite:"None",
             path:'/'
         }
         return res.status(200).cookie("accessToken", accessToken, options)
@@ -121,7 +121,7 @@ export const userLogin = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,
             secure: true,
-            sameSite:none,
+            sameSite:"None",
             path:'/'
         }
         return res.status(200).cookie("accessToken", accessToken, options)
@@ -211,7 +211,7 @@ export const logout = asyncHandler(async (req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite:none,
+        sameSite:"None",
             path:'/'
     }
     return res.status(200)
@@ -251,7 +251,7 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,
             secure: true,
-            sameSite:none,
+            sameSite:"None",
             path:'/'
         }
         return res.status(200)

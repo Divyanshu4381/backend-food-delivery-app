@@ -1,14 +1,16 @@
 
 import {Router} from 'express'
 import  { authorizeRoles, verifyJWT } from '../middlewares/auth.middleware.js';
-import { createProduct, getAllProducts, updateProduct } from '../controllers/product.controller.js';
+import { createProduct, deleteProduct, getAllProducts, getProductById, updateProduct } from '../controllers/product.controller.js';
 
 const router=Router();
 
 
 router.post('/create-product',verifyJWT,authorizeRoles("frenchies"),createProduct)
-router.post('/getallproduct',verifyJWT,authorizeRoles("frenchies"),getAllProducts)
+router.get('/getallproduct',verifyJWT,authorizeRoles("frenchies"),getAllProducts)
+router.get('/getallproduct/:id',verifyJWT,authorizeRoles("frenchies"),getProductById)
 
-router.post('/updateproduct',verifyJWT,authorizeRoles("frenchies"),updateProduct)
+router.put('/updateproduct',verifyJWT,authorizeRoles("frenchies"),updateProduct)
+router.delete('/deleteproduct',verifyJWT,authorizeRoles("frenchies"),deleteProduct)
 
 export default router;
