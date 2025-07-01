@@ -98,7 +98,9 @@ export const userLogin = asyncHandler(async (req, res) => {
         const loggedInUser = await SuperAdmin.findById(user._id).select("-password -refreshToken");
         const options = {
             httpOnly: true,
-            secure: true
+            secure: true,
+            sameSite:none,
+            path:'/'
         }
         return res.status(200).cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
@@ -118,7 +120,9 @@ export const userLogin = asyncHandler(async (req, res) => {
         const loggedInUser = await Frenchies.findById(user._id).select("-password -refreshToken");
         const options = {
             httpOnly: true,
-            secure: true
+            secure: true,
+            sameSite:none,
+            path:'/'
         }
         return res.status(200).cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
@@ -206,7 +210,9 @@ export const logout = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite:none,
+            path:'/'
     }
     return res.status(200)
         .clearCookie("accessToken", options)
@@ -244,7 +250,9 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
         const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
         const options = {
             httpOnly: true,
-            secure: true
+            secure: true,
+            sameSite:none,
+            path:'/'
         }
         return res.status(200)
             .cookie("accessToken", accessToken, options)
