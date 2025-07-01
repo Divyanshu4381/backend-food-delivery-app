@@ -22,6 +22,7 @@ app.use(cookieParser());
 
 app.use('/api/v1/users',userRoutes)
 app.use('/api/v1/category',categoryRoutes)
+app.use('/api/v1/product',productRoutes)
 // http://localhost:5000/api/v1/users/register
 
 ConnectDB().then(()=>{

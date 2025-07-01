@@ -2,27 +2,34 @@ import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js"
 import { Product } from "../models/product.model.js";
-
+import { uploadOnCloudinary } from "../config/cloudinary.js";
+import mongoose from "mongoose";
 export const createProduct=asyncHandler(async(req,res)=>{
-    const {name,description,image,price,discountPrice, quantityAvailable,category,Frenchies,isAvailable,preparationTime,
-        rating,gst
+    const {name,description,price, quantityAvailable,category,Frenchies,isAvailable,preparationTime,
+        
     } = req.body;
-    if (!name || !image || !price || !category || !Frenchies) {
+    if (!name || !price || !category || !Frenchies) {
         throw new ApiError(400, "Product name, image, price, category, and Frenchies are required");
+    }
+    const imageLocalPath = req.file?.path;
+    ;
+    if (!imageLocalPath) {
+        throw new ApiError(400, "Image is required")
+    }
+    const image = await uploadOnCloudinary(imageLocalPath)
+    if(!image.url){
+        throw new ApiError(400,"image upload failed")
     }
     const product = await Product.create({
         name,
         description,
-        image,
+        image:image.url,
         price,
-        discountPrice,
         quantityAvailable,
         category,
         Frenchies,
         isAvailable,
-        preparationTime,
-        rating,
-        gst
+        preparationTime
     });
 return res.status(201).json(
         new ApiResponse(201, product, "Product created successfully")
@@ -46,6 +53,7 @@ export const getAllProducts = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, products, "Products fetched successfully"));
 });
+
 export const updateProduct = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -53,6 +61,15 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
     if (!product) {
         throw new ApiError(404, "Product not found");
+    }
+
+    // ✅ ObjectId Validation for category and Frenchies
+    if (req.body.category && !mongoose.Types.ObjectId.isValid(req.body.category)) {
+        throw new ApiError(400, "Invalid category ID");
+    }
+
+    if (req.body.Frenchies && !mongoose.Types.ObjectId.isValid(req.body.Frenchies)) {
+        throw new ApiError(400, "Invalid Frenchies ID");
     }
 
     const updatableFields = [
@@ -82,6 +99,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, product, "Product updated successfully"));
 });
+
 
 // ✅ Delete Product (Soft Delete - Mark isAvailable as false)
 export const deleteProduct = asyncHandler(async (req, res) => {

@@ -93,14 +93,14 @@ export const userLogin = asyncHandler(async (req, res) => {
 
         const isPasswordValid = await user.isPasswordCorrect(password);
         if (!isPasswordValid) throw new ApiError(401, "Invalid credentials for SuperAdmin");
-        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id,user.role);
+        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id, user.role);
 
         const loggedInUser = await SuperAdmin.findById(user._id).select("-password -refreshToken");
         const options = {
             httpOnly: true,
             secure: true,
-            sameSite:"None",
-            path:'/'
+            sameSite: "None",
+            path: '/'
         }
         return res.status(200).cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
@@ -121,8 +121,8 @@ export const userLogin = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,
             secure: true,
-            sameSite:"None",
-            path:'/'
+            sameSite: "None",
+            path: '/'
         }
         return res.status(200).cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
@@ -137,7 +137,7 @@ export const userLogin = asyncHandler(async (req, res) => {
         user = await User.create({ phone, role: "customer" });
     }
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id,user.role);
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id, user.role);
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
@@ -151,7 +151,7 @@ export const userLogin = asyncHandler(async (req, res) => {
 
 
 export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
-    const { name,phone, email, address, city, state, country } = req.body;
+    const { name, phone, email, address, city, state, country } = req.body;
     if (!phone || !email || !address) {
         throw new ApiError(400, "Email and Password is missing")
     }
@@ -163,7 +163,7 @@ export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
 
     const newAdmin = await Frenchies.create({
         frenchiesID: frenchiesID,
-        frenchieName:name,
+        frenchieName: name,
         phone,
         email,
         address,
@@ -212,8 +212,8 @@ export const logout = asyncHandler(async (req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite:"None",
-            path:'/'
+        sameSite: "None",
+        path: '/'
     }
     return res.status(200)
         .clearCookie("accessToken", options)
@@ -252,8 +252,8 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,
             secure: true,
-            sameSite:"None",
-            path:'/'
+            sameSite: "None",
+            path: '/'
         }
         return res.status(200)
             .cookie("accessToken", accessToken, options)
@@ -391,7 +391,7 @@ export const getSingleFrenchies = asyncHandler(async (req, res) => {
 
 
 export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
-    const { action, frenchiesID, updateData,status } = req.body;
+    const { action, frenchiesID, updateData, status } = req.body;
     if (!action || !frenchiesID) {
         throw new ApiError(400, "Action and FrenchiesID are required.");
 
@@ -450,4 +450,11 @@ export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
 })
 
 
-// get single frenchies
+// get user
+
+export const getCurrentUser = asyncHandler(async (req, res) => {
+    
+    return res.status(200).json(
+        new ApiResponse(200, req.user, "User fetched successfully")
+    )
+})

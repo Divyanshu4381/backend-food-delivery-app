@@ -2,9 +2,10 @@ import { Category } from "../models/category.model.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { uploadOnCloudinary } from "../config/cloudinary.js"
 
 export const createCategory = asyncHandler(async (req, res) => {
-    const { name, image } = req.body;
+    const { name } = req.body;
 
     if (!name) {
         throw new ApiError(400, "Category name is required");
@@ -14,8 +15,14 @@ export const createCategory = asyncHandler(async (req, res) => {
     if (existingCategory) {
         throw new ApiError(400, "Category with this name already exists");
     }
+    const imageLocalPath = req.file?.path;
+    ;
+    if (!imageLocalPath) {
+        throw new ApiError(400, "Image is required")
+    }
+    const image = await uploadOnCloudinary(imageLocalPath)
 
-    const category = await Category.create({ name, image });
+    const category = await Category.create({ name, image: image.url });
 
     return res
         .status(201)
