@@ -4,10 +4,13 @@ import app from './app.js'
 import { PORT } from './utils/constant.js';
 import ConnectDB from './config/dbConnect.js';
 import userRoutes from './routes/user.routes.js'
-import cookieParser from "cookie-parser";
+import cors from "cors"
 
-
-app.use(cookieParser());
+const corsOptions={
+    origin:`${process.env.BASE_URL}`,
+    credentials:true,
+}
+app.use(cors(corsOptions))
 
 app.use('/api/v1/users',userRoutes)
 // http://localhost:5000/api/v1/users/register

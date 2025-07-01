@@ -123,6 +123,33 @@ frenchiesSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
+frenchiesSchema.methods.generateAccessToken = function () {
+    return jwt.sign({
+        _id: this._id,
+        phone: this.phone,
+        role: this.role
+
+    },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+    )
+}
+frenchiesSchema.methods.generateRefreshToken = function () {
+    return jwt.sign({
+        _id: this._id,
+        role: this.role,
+        phone: this.phone
+
+
+    },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
+    )
+}
+
+
+
+// super admin work
 superAdminSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
     this.password = await bcrypt.hash(this.password, 10)

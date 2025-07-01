@@ -6,10 +6,20 @@ import { SuperAdmin } from "../models/user.model.js";
 import jwt from 'jsonwebtoken'
 import mongoose from "mongoose";
 
-const generateAccessAndRefreshTokens = async (userId) => {
+const generateAccessAndRefreshTokens = async (userId, role) => {
 
     try {
-        const user = await SuperAdmin.findById(userId);
+        let user;
+
+        if (role === "superadmin") {
+            user = await SuperAdmin.findById(userId);
+        } else if (role === "frenchies") {
+            user = await Frenchies.findById(userId);
+        } else if (role === "user") {
+            user = await User.findById(userId);
+        } else {
+            throw new ApiError(400, "Invalid user role for token generation");
+        }
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
         user.refreshToken = refreshToken;
@@ -103,7 +113,8 @@ export const userLogin = asyncHandler(async (req, res) => {
         if (!password) throw new ApiError(400, "Password is required for Admin");
         const isPasswordValid = await user.isPasswordCorrect(password);
         if (!isPasswordValid) throw new ApiError(401, "Invalid credentials for Frenchies Admin");
-        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id, user.role);
+        console.log(accessToken, refreshToken)
         const loggedInUser = await Frenchies.findById(user._id).select("-password -refreshToken");
         const options = {
             httpOnly: true,
@@ -213,15 +224,14 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
     }
     try {
         const decodedToken = jwt.verify(incomingrefreshToken, process.env.REFRESH_TOKEN_SECRET)
-        const { id, role } = decodedToken;
-
+        const { _id, role } = decodedToken;
         let user;
         if (role === "superAdmin") {
-            user = await SuperAdmin.findById(id)
+            user = await SuperAdmin.findById(_id)
         } else if (role === "frenchies") {
-            user = await Frenchies.findById(id)
-        } else if (role === "Customer") {
-            user = await Customer.findById(id);
+            user = await Frenchies.findById(_id)
+        } else if (role === "customer") {
+            user = await User.findById(_id);
         } else {
             throw new ApiError(401, "Invalid role in token");
         }
@@ -255,8 +265,8 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
 // CRUD operation set for frenchie
 
 export const updateDetailsFrenchie = asyncHandler(async (req, res) => {
-    const { latitude, longitude, address, password } = req.body;
     const userId = req.user._id
+    const { latitude, longitude, address, password } = req.body;
 
     if (!latitude || !longitude || !password) {
         throw new ApiError(400, "Location and Password are required to update Frenchies details.")
@@ -265,10 +275,8 @@ export const updateDetailsFrenchie = asyncHandler(async (req, res) => {
     if (!user) {
         throw new ApiError(404, "Frenchies user not found with the provided ID.")
     }
-    user.location = {
-        latitude,
-        longitude
-    }
+    user.location.coordinates = [parseFloat(longitude), parseFloat(latitude)];
+
     if (address) {
         user.address = address;
     }
@@ -289,7 +297,7 @@ export const forgetPassword = asyncHandler(async (req, res) => {
     if (!email && !phone && !frenchiesID) {
         throw new ApiError(400, "At least one of Email, Phone, or FrenchiesID is required.")
     }
-    const user = await Frenchies.find({ $or: [{ email }, { phone }, { frenchiesID }] })
+    const user = await Frenchies.findOne({ $or: [{ email }, { phone }, { frenchiesID }] })
     if (!user) {
         throw new ApiError(400, "No Frenchies user found with the provided Email, Phone, or FrenchiesID.");
     }
@@ -392,7 +400,7 @@ export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
 
             }
             const protectedFields = ["phone", "frenchiesID", "role", "_id"];
-            
+
             for (const key of Object.keys(updateData)) {
                 if (protectedFields.includes(key)) {
                     throw new ApiError(400, `${key} cannot be updated.`);
