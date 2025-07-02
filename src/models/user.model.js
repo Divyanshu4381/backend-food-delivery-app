@@ -215,4 +215,4 @@ const SuperAdmin = mongoose.model('SuperAdmin', superAdminSchema)
 
 
 
-export { User, Frenchies, SuperAdmin };
+export { Customer, Frenchies, SuperAdmin };
