@@ -1,6 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
-import { Frenchies, User } from "../models/user.model.js";
+import { Frenchies, Customer } from "../models/user.model.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { SuperAdmin } from "../models/user.model.js";
 import jwt from 'jsonwebtoken'
@@ -16,7 +16,7 @@ const generateAccessAndRefreshTokens = async (userId, role) => {
         } else if (role === "frenchies") {
             user = await Frenchies.findById(userId);
         } else if (role === "user") {
-            user = await User.findById(userId);
+            user = await Customer.findById(userId);
         } else {
             throw new ApiError(400, "Invalid user role for token generation");
         }
@@ -130,16 +130,16 @@ export const userLogin = asyncHandler(async (req, res) => {
     }
 
     // Customer Login
-    user = await User.findOne({ phone });
+    user = await Customer.findOne({ phone });
 
     if (!user) {
         // User doesn't exist, create new customer
-        user = await User.create({ phone, role: "customer" });
+        user = await Customer.create({ phone, role: "customer" });
     }
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id, user.role);
 
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+    const loggedInUser = await Customer.findById(user._id).select("-password -refreshToken");
 
     return res.status(200)
         .cookie("accessToken", accessToken, options)
@@ -197,7 +197,7 @@ export const logout = asyncHandler(async (req, res) => {
     } else if (userRole === "frenchies") {
         userModel = Frenchies;
     } else if (userRole === "customer") {
-        userModel = User;
+        userModel = Customer;
     } else {
         throw new ApiError(400, "Invalid user role");
     }
@@ -238,7 +238,7 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
         } else if (role === "frenchies") {
             user = await Frenchies.findById(_id)
         } else if (role === "customer") {
-            user = await User.findById(_id);
+            user = await Customer.findById(_id);
         } else {
             throw new ApiError(401, "Invalid role in token");
         }

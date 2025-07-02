@@ -112,7 +112,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, null, "Product deleted (soft delete) successfully"));
+        .json(new ApiResponse(200, {data:null}, "Product deleted (soft delete) successfully"));
 });
 
 export const getProductById = asyncHandler(async (req, res) => {
