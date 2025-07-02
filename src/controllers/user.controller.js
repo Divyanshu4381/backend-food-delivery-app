@@ -248,7 +248,7 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
         if (incomingrefreshToken !== user?.refreshToken) {
             throw new ApiError(401, "Invalid refresh token");
         }
-        const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
+        const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id,role);
         const options = {
             httpOnly: true,
             secure: true,

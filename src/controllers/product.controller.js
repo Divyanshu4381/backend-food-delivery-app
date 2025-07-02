@@ -5,8 +5,7 @@ import { Product } from "../models/product.model.js";
 import { uploadOnCloudinary } from "../config/cloudinary.js";
 import mongoose from "mongoose";
 export const createProduct=asyncHandler(async(req,res)=>{
-    const {name,description,price, stock,category,preparationTime,
-        
+    const {name,description,price, stock,category     
     } = req.body;
     if (!name || !price || !category ) {
         throw new ApiError(400, "Product name, image, price, category, and Frenchies are required");
