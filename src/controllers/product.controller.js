@@ -107,13 +107,13 @@ export const deleteProduct = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Product not found");
     }
 
-    product.isAvailable = false;
-    await product.save();
+    await Product.findByIdAndDelete(id);
 
     return res
         .status(200)
-        .json(new ApiResponse(200, {data:null}, "Product deleted (soft delete) successfully"));
+        .json(new ApiResponse(200,  "Product deleted permanently",null));
 });
+
 
 export const getProductById = asyncHandler(async (req, res) => {
     const { id } = req.params;
