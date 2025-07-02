@@ -13,7 +13,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   const {
     orderItems,
     deliveryLocation,
-    discount = 0,         // ✅ Default discount 0
+    discount = 0,         
     paymentMethod,
     paymentId,
   } = req.body;
@@ -32,13 +32,12 @@ export const createOrder = asyncHandler(async (req, res) => {
   const productIds = orderItems.map((item) => item.productId);
   const products = await Product.find(
     { _id: { $in: productIds } },
-    "_id price frenchiesId"
+    "_id price Frenchies"
   );
 
   if (products.length !== orderItems.length) {
     throw new ApiError(400, "One or more products not found");
   }
-
   // ✅ Step 2: Ensure all products are from same Frenchies
   const uniqueFrenchiesIds = [
     ...new Set(
