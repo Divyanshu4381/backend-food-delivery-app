@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
     }
 }, { timestamps: true })
 
+
 const frenchiesSchema = new mongoose.Schema({
     ...userSchema.obj,
     frenchiesID: {

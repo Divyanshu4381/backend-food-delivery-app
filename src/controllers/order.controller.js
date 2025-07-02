@@ -1,12 +1,13 @@
-import Order from "../models/order.model";
-import ApiError from "../utils/ApiError";
-import ApiResponse from "../utils/ApiResponse";
-import asyncHandler from "../utils/asyncHandler";
+import Order from "../models/order.model.js";
+import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/ApiResponse.js";
+import asyncHandler from "../utils/asyncHandler.js";
+
 const generateOrderId = () => {
   const timestamp = Date.now();
   return `ORD-${timestamp}`;
 };
-const createOrder=asyncHandler(async(req,res)=>{
+export const createOrder=asyncHandler(async(req,res)=>{
     const {
     orderItems,
     deliveryLocation,
@@ -16,7 +17,8 @@ const createOrder=asyncHandler(async(req,res)=>{
     paymentMethod,
     paymentId,
   } = req.body;
-  const {customerId}=req.user?.id
+  const customerId=req.user?._id
+  
   if(!customerId){
     throw new ApiError(
         404,"Customer not found"

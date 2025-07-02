@@ -137,10 +137,31 @@ export const userLogin = asyncHandler(async (req, res) => {
         user = await User.create({ phone, role: "customer" });
     }
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id, user.role);
+    const accessToken = jwt.sign({
+        _id: user._id,
+        phone: user.phone,
+        role: user.role
 
+    },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "7d" }
+    )
+    const refreshToken = jwt.sign({
+        _id: user._id,
+        phone: user.phone,
+        role: user.role
+
+    },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: "30d" }
+    )
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
-
+    const options = {
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+            path: '/'
+        }
     return res.status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
@@ -248,7 +269,7 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
         if (incomingrefreshToken !== user?.refreshToken) {
             throw new ApiError(401, "Invalid refresh token");
         }
-        const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id,role);
+        const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id, role);
         const options = {
             httpOnly: true,
             secure: true,
@@ -453,7 +474,7 @@ export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
 // get user
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
-    
+
     return res.status(200).json(
         new ApiResponse(200, req.user, "User fetched successfully")
     )

@@ -20,10 +20,10 @@ router.patch('/frenchies/forget-password',forgetPassword)
 // for super admin
 router.get('/super-admin/getallfrenchies',verifyJWT,authorizeRoles("superAdmin"),getAllFrenchies)
 router.get('/getsinglefrenchie',verifyJWT,authorizeRoles("superAdmin"),getSingleFrenchies)
-router.post('/refereshaccesstoken',verifyJWT,refereshAccessToken)
 router.put('/super-admin/manage-frenchies',verifyJWT,authorizeRoles("superAdmin"),manageFrenchiesBySuperAdmin)
 
 // all user work api
+router.post('/refereshaccesstoken',verifyJWT,refereshAccessToken)
 router.get('/getcurrentuser',verifyJWT,getCurrentUser)
 
 
