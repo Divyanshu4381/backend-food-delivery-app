@@ -207,7 +207,7 @@ superAdminSchema.methods.generateRefreshToken = function () {
     )
 }
 
-const Customer = mongoose.model('Customer', userSchema);
+const Customer = mongoose.model('Customer', customerSchema);
 const Frenchies = mongoose.model('Frenchies', frenchiesSchema);
 
 superAdminSchema.plugin(mongooseAggregatePaginate);
