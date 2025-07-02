@@ -2,7 +2,7 @@ import Order from "../models/order.model.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
-
+import { Product } from "../models/product.model.js";
 const generateOrderId = () => {
   const timestamp = Date.now();
   return `ORD-${timestamp}`;
@@ -28,6 +28,9 @@ export const createOrder=asyncHandler(async(req,res)=>{
   if (!orderItems || orderItems.length === 0) {
     return res.status(400).json({ message: 'Order items are required' });
   }
+  
+  const productIds = orderItems.map((item) => item.productId);
+
   const newOrder = await Order.create({
     orderId: generateOrderId(),
     customerId,

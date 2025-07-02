@@ -4,6 +4,7 @@ import ApiResponse from "../utils/ApiResponse.js"
 import { Product } from "../models/product.model.js";
 import { uploadOnCloudinary } from "../config/cloudinary.js";
 import mongoose from "mongoose";
+import { Frenchies } from "../models/user.model.js";
 export const createProduct=asyncHandler(async(req,res)=>{
     const {name,description,price, stock,category     
     } = req.body;
@@ -32,7 +33,11 @@ export const createProduct=asyncHandler(async(req,res)=>{
         category,
         Frenchies:frenchiesId,
     });
-return res.status(201).json(
+
+    await Frenchies.findByIdAndUpdate(frenchiesId, {
+        $push: { product: product._id }
+    });
+    return res.status(201).json(
         new ApiResponse(201, product, "Product created successfully")
     );
 
