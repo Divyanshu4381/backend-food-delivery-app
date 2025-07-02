@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from 'bcrypt'
 import jwt from "jsonwebtoken";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
-const customerSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
     phone: {
         type: String,
         required: [true, "Phone number required"],
@@ -207,7 +207,7 @@ superAdminSchema.methods.generateRefreshToken = function () {
     )
 }
 
-const Customer = mongoose.model('Customer', customerSchema);
+const User = mongoose.model('User', userSchema);
 const Frenchies = mongoose.model('Frenchies', frenchiesSchema);
 
 superAdminSchema.plugin(mongooseAggregatePaginate);
@@ -215,4 +215,6 @@ const SuperAdmin = mongoose.model('SuperAdmin', superAdminSchema)
 
 
 
-export { Customer, Frenchies, SuperAdmin };
+
+
+export { User, Frenchies, SuperAdmin };
