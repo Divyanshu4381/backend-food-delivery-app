@@ -21,7 +21,8 @@ export const createCategory = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Image is required")
     }
     const image = await uploadOnCloudinary(imageLocalPath)
-
+    console.log(image)
+    console.log("image :",image.url)
     const category = await Category.create({ name, image: image.url });
 
     return res
