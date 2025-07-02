@@ -157,11 +157,11 @@ export const userLogin = asyncHandler(async (req, res) => {
     )
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
     const options = {
-            httpOnly: true,
-            secure: true,
-            sameSite: "None",
-            path: '/'
-        }
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        path: '/'
+    }
     return res.status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
@@ -479,3 +479,36 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
         new ApiResponse(200, req.user, "User fetched successfully")
     )
 })
+export const getCurrentUserDetails = asyncHandler(async (req, res) => {
+    const userId = req.user?._id;
+    const role = req.user?.role;
+
+    if (!userId || !role) {
+        throw new ApiError(401, "Unauthorized: User info missing");
+    }
+
+    let user;
+
+    switch (role) {
+        case "customer":
+            user = await Customer.findById(userId).select("-password");
+            break;
+        case "frenchies":
+            user = await Frenchies.findById(userId).select("-password");
+            break;
+        case "superAdmin":
+            user = await SuperAdmin.findById(userId).select("-password");
+            break;
+        
+        default:
+            throw new ApiError(400, "Invalid user role");
+    }
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "User details fetched successfully"));
+});

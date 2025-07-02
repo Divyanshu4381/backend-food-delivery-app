@@ -1,6 +1,6 @@
 
 import {Router} from 'express'
-import { forgetPassword, frenchiesCreatedByAdmin, getAllFrenchies, getCurrentUser, getSingleFrenchies, logout, manageFrenchiesBySuperAdmin, refereshAccessToken, registerSuperAdmin, updateDetailsFrenchie, userLogin } from '../controllers/user.controller.js';
+import { forgetPassword, frenchiesCreatedByAdmin, getAllFrenchies, getCurrentUser, getCurrentUserDetails, getSingleFrenchies, logout, manageFrenchiesBySuperAdmin, refereshAccessToken, registerSuperAdmin, updateDetailsFrenchie, userLogin } from '../controllers/user.controller.js';
 import  { authorizeRoles, verifyJWT } from '../middlewares/auth.middleware.js';
 
 const router=Router();
@@ -25,6 +25,7 @@ router.put('/super-admin/manage-frenchies',verifyJWT,authorizeRoles("superAdmin"
 // all user work api
 router.post('/refereshaccesstoken',verifyJWT,refereshAccessToken)
 router.get('/getcurrentuser',verifyJWT,getCurrentUser)
+router.get('/getcurrentuserdetails',verifyJWT,getCurrentUserDetails)
 
 
 
