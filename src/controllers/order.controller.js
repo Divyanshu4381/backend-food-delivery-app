@@ -13,7 +13,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   const {
     orderItems,
     deliveryLocation,
-    discount = 0,         
+    discount = 0,
     paymentMethod,
     paymentId,
   } = req.body;
@@ -98,6 +98,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       },
     ],
   });
+  await Cart.findOneAndDelete({ userId });
 
   return res
     .status(201)

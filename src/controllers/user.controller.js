@@ -126,7 +126,8 @@ export const userLogin = asyncHandler(async (req, res) => {
         }
         return res.status(200).cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
-            .json(new ApiResponse(200, { user: loggedInUser }, "Frenchies Admin Login Successful"));
+            .json(new ApiResponse(200, { user: loggedInUser,accessToken,
+        refreshToken }, "Frenchies Admin Login Successful"));
     }
 
     // Customer Login
