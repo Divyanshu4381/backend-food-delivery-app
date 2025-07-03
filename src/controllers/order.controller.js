@@ -57,7 +57,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
   await Cart.findOneAndDelete({ customerId });
   await Frenchies.findByIdAndUpdate(
     frenchiesId,
-    { $addToSet: { customers: customerId } } // prevents duplicates
+    { $addToSet: { customers: customerId } }
   );
 
   return res.status(201).json(
