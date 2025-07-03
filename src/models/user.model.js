@@ -39,6 +39,9 @@ const frenchiesSchema = new mongoose.Schema({
         unique: true,
         index: true
     },
+    profilePhoto:{
+        type:String
+    },
     email: {
         type: String,
         required: true,

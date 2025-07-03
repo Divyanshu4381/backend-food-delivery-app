@@ -2,6 +2,7 @@
 import {Router} from 'express'
 import { forgetPassword, frenchiesCreatedByAdmin, getAllFrenchies, getCurrentUser, getCurrentUserDetails, getSingleFrenchies, logout, manageFrenchiesBySuperAdmin, refereshAccessToken, registerSuperAdmin, updateDetailsFrenchie, updatePassword, userLogin } from '../controllers/user.controller.js';
 import  { authorizeRoles, verifyJWT } from '../middlewares/auth.middleware.js';
+import { upload } from '../middlewares/multer.js';
 
 const router=Router();
 
@@ -14,7 +15,7 @@ router.post('/logout',verifyJWT,logout)
 
 
 // for frenchies handling
-router.put('/frenchies/update-details-frenchie',verifyJWT,authorizeRoles("frenchies"),updateDetailsFrenchie)
+router.put('/frenchies/update-details-frenchie',verifyJWT,authorizeRoles("frenchies"),upload.single('image'),updateDetailsFrenchie)
 router.patch('/frenchies/forget-password',forgetPassword)
 
 // for super admin

@@ -5,6 +5,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { SuperAdmin } from "../models/user.model.js";
 import jwt from 'jsonwebtoken'
 import mongoose from "mongoose";
+import { uploadOnCloudinary } from "../config/cloudinary.js";
 
 const generateAccessAndRefreshTokens = async (userId, role) => {
 
@@ -292,6 +293,7 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
     }
 })
 
+// CRUD operation set for frenchie
 export const updatePassword=asyncHandler(async(req,res)=>{
     const {oldPassword,newPassword,confirmPassword}=req.body;
     const userId=req.user?._id;
@@ -324,44 +326,54 @@ export const updatePassword=asyncHandler(async(req,res)=>{
 
 
 })
-// CRUD operation set for frenchie
+
 
 
 export const updateDetailsFrenchie = asyncHandler(async (req, res) => {
-    const userId = req.user._id;
-    const {
-        frenchieName,
-        ownerName,
-        email,
-        
-        address,
-        latitude,
-        longitude,
-    } = req.body;
+  const userId = req.user._id;
+  const {
+    frenchieName,
+    ownerName,
+    email,
+    contact_no,
+    address,
+    latitude,
+    longitude,
+  } = req.body;
 
-    const user = await Frenchies.findById(userId);
-    if (!user) {
-        throw new ApiError(404, "Frenchies user not found with the provided ID.");
+  const user = await Frenchies.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "Frenchies user not found with the provided ID.");
+  }
+
+  // Optional: Image Upload
+  const imageLocalPath = req.file?.path;
+  if (imageLocalPath) {
+    const image = await uploadOnCloudinary(imageLocalPath);
+    if (image?.url) {
+      user.profilePhoto = image.url;
     }
+  }
 
-    if (frenchieName) user.frenchieName = frenchieName;
-    if (ownerName) user.ownerName = ownerName;
-    if (email) user.email = email;
-    if(contact_no) user.contact_no=contact_no;
-    if (address) user.address = address;
+  // Optional: Fields to update (only if provided)
+  if (frenchieName) user.frenchieName = frenchieName;
+  if (ownerName) user.ownerName = ownerName;
+  if (email) user.email = email;
+  if (contact_no) user.contact_no = contact_no;
+  if (address) user.address = address;
 
-    if (latitude && longitude) {
-        user.location = {
-            type: "Point",
-            coordinates: [parseFloat(longitude), parseFloat(latitude)],
-        };
-    }
+  if (latitude && longitude) {
+    user.location = {
+      type: "Point",
+      coordinates: [parseFloat(longitude), parseFloat(latitude)],
+    };
+  }
 
-    await user.save();
+  await user.save();
 
-    return res.status(200).json(
-        new ApiResponse(200, { user }, "Profile updated successfully.")
-    );
+  return res.status(200).json(
+    new ApiResponse(200, { user }, "Profile updated successfully.")
+  );
 });
 
 
