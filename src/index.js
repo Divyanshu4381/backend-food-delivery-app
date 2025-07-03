@@ -11,11 +11,16 @@ import orderRoutes from './routes/order.routes.js'
 import cors from "cors"
 import cookieParser from 'cookie-parser';
 
-const corsOptions={
-    origin:`${process.env.BASE_URL}`||"*",
-    credentials:true,
-    
-}
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:\d{4}$/.test(origin) || origin === `${process.env.BASE_URL}`) {
+      callback(null, true); // ✅ Yeh allow karega origin ko
+    } else {
+      callback(new Error("Not allowed by CORS")); // ❌ Block karega
+    }
+  },
+  credentials: true, // ✅ Yeh enable karega cookie sending
+};
 
 app.use(cors(corsOptions))
 app.use(cookieParser());
