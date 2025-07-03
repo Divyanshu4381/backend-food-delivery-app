@@ -116,7 +116,6 @@ export const userLogin = asyncHandler(async (req, res) => {
         const isPasswordValid = await user.isPasswordCorrect(password);
         if (!isPasswordValid) throw new ApiError(401, "Invalid credentials for Frenchies Admin");
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id, user.role);
-        console.log(accessToken, refreshToken)
         const loggedInUser = await Frenchies.findById(user._id).select("-password -refreshToken");
         const options = {
             httpOnly: true,
@@ -173,7 +172,7 @@ export const userLogin = asyncHandler(async (req, res) => {
 
 
 export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
-    const { name, phone, email, address, city, state, country } = req.body;
+    const { name,ownerName, phone, email, address, city, state, country } = req.body;
     if (!phone || !email || !address) {
         throw new ApiError(400, "Email and Password is missing")
     }
@@ -186,6 +185,7 @@ export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
     const newAdmin = await Frenchies.create({
         frenchiesID: frenchiesID,
         frenchieName: name,
+        ownerName,
         phone,
         email,
         address,
@@ -331,6 +331,7 @@ export const updateDetailsFrenchie = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const {
         frenchieName,
+        ownerName,
         email,
         
         address,
@@ -344,8 +345,9 @@ export const updateDetailsFrenchie = asyncHandler(async (req, res) => {
     }
 
     if (frenchieName) user.frenchieName = frenchieName;
+    if (ownerName) user.ownerName = ownerName;
     if (email) user.email = email;
-    
+    if(contact_no) user.contact_no=contact_no;
     if (address) user.address = address;
 
     if (latitude && longitude) {

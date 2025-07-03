@@ -29,12 +29,15 @@ const frenchiesSchema = new mongoose.Schema({
         unique: true,
         index: true
     },
+    ownerName:{
+        type:String,
+        required:[true,"Owner Name is required"]
+    },
     frenchieName: {
         type: String,
         required: true,
         unique: true,
         index: true
-
     },
     email: {
         type: String,
@@ -43,7 +46,9 @@ const frenchiesSchema = new mongoose.Schema({
         lowercase: true,
         trim: true
     },
-
+    contact_no:{
+        type:String
+    },
     password: {
         type: String,
         required: true,
