@@ -13,6 +13,9 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: [true, "Product image URL is required"]
     },
+    discountCoupon:{
+        type:String
+    },
     price: {
         type: Number,
         required: [true, "Product price is required"]

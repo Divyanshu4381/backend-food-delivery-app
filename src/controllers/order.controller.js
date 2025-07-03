@@ -1,106 +1,55 @@
 import Order from "../models/order.model.js";
-import ApiError from "../utils/ApiError.js";
-import ApiResponse from "../utils/ApiResponse.js";
+import { Cart } from "../models/cart.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { Product } from "../models/product.model.js";
+import ApiResponse from "../utils/ApiResponse.js";
+import ApiError from "../utils/ApiError.js";
 
-const generateOrderId = () => {
-  const timestamp = Date.now();
-  return `ORD-${timestamp}`;
-};
+export const placeOrder = asyncHandler(async (req, res) => {
+  const customerId = req.user._id;
+  const {discount, deliveryLocation, paymentMethod, paymentId } = req.body;
 
-export const createOrder = asyncHandler(async (req, res) => {
-  const {
-    orderItems,
-    deliveryLocation,
-    discount = 0,
-    paymentMethod,
-    paymentId,
-  } = req.body;
+  const cart = await Cart.findOne({ customerId }).populate("items.productId");
 
-  const customerId = req.user?._id;
-
-  if (!customerId) {
-    throw new ApiError(404, "Customer not found");
+  if (!cart || cart.items.length === 0) {
+    throw new ApiError(400, "Cart is empty");
   }
 
-  if (!orderItems || orderItems.length === 0) {
-    throw new ApiError(400, "Order items are required");
-  }
+  // Find Frenchies from first item (assuming all products same Frenchies)
+  const frenchiesId = cart.items[0].productId.Frenchies;
 
-  // ✅ Step 1: Get all product details
-  const productIds = orderItems.map((item) => item.productId);
-  const products = await Product.find(
-    { _id: { $in: productIds } },
-    "_id price Frenchies"
-  );
+  const orderItems = cart.items.map((item) => ({
+    productId: item.productId._id,
+    quantity: item.quantity,
+    price: item.priceAtTime,
+  }));
 
-  if (products.length !== orderItems.length) {
-    throw new ApiError(400, "One or more products not found");
-  }
-  // ✅ Step 2: Ensure all products are from same Frenchies
-  const uniqueFrenchiesIds = [
-    ...new Set(
-      products.map((p) => {
-        if (!p.Frenchies) {
-          throw new ApiError(400, `Product ${p._id} has no Frenchies`);
-        }
-        return p.Frenchies.toString();
-      })
-    ),
-  ];
-
-
-  if (uniqueFrenchiesIds.length !== 1) {
-    throw new ApiError(400, "All products in order must belong to the same Frenchies");
-  }
-
-  const frenchiesId = uniqueFrenchiesIds[0];
-
-  // ✅ Step 3: Attach correct price from DB into orderItems
-  const finalOrderItems = orderItems.map((item) => {
-    const product = products.find((p) => p._id.toString() === item.productId);
-    return {
-      productId: item.productId,
-      quantity: item.quantity,
-      price: product.price,
-    };
-  });
-
-  // ✅ Step 4: Calculate Amount and TotalAmount
-  const calculatedAmount = finalOrderItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+  const amount = orderItems.reduce(
+    (total, item) => total + item.quantity * item.price,
     0
   );
 
-  const finalTotalAmount = calculatedAmount - discount;
+  const totalAmount = amount-discount; // for now no discount logic
 
-  if (finalTotalAmount < 0) {
-    throw new ApiError(400, "Total amount cannot be negative after discount");
-  }
-
-  // ✅ Step 5: Create Order
   const newOrder = await Order.create({
-    orderId: generateOrderId(),
+    orderId: "ORD" + Date.now(),
     customerId,
     frenchiesId,
-    orderItems: finalOrderItems,
-    deliveryLocation,
-    amount: calculatedAmount,
+    orderItems,
+    deliveryLocation, // {coordinates, address, landmark}
     discount,
-    totalAmount: finalTotalAmount,
+    amount,
+    totalAmount,
     paymentMethod,
-    paymentId,
-    statusHistory: [
-      {
-        status: "confirmed",
-        timestamp: new Date(),
-      },
-    ],
+    paymentId: paymentId || null,
+    paymentStatus: paymentMethod === "COD" ? "pending" : "success",
+    statusHistory: [{ status: "confirmed", timestamp: new Date() }],
   });
-  await Cart.findOneAndDelete({ userId });
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, newOrder, "Order created successfully"));
+  // Clear cart after order placed
+  await Cart.findOneAndDelete({ customerId  });
+
+
+  return res.status(201).json(
+    new ApiResponse(201, newOrder, "Order placed successfully")
+  );
 });
