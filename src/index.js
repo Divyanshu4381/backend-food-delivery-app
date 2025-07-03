@@ -13,14 +13,22 @@ import cookieParser from 'cookie-parser';
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:\d{4}$/.test(origin) || origin === `${process.env.BASE_URL}`) {
-      callback(null, true); // ✅ Yeh allow karega origin ko
+    const allowedOrigins = [
+      process.env.BASE_URL,
+      "http://localhost:5173",
+      "http://192.168.0.1:5173",
+    ];
+
+    if (!origin || allowedOrigins.includes(origin) || /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:\d{4}$/.test(origin)) {
+      callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS")); // ❌ Block karega
+      console.log("❌ Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true, // ✅ Yeh enable karega cookie sending
+  credentials: true,
 };
+
 
 app.use(cors(corsOptions))
 app.use(cookieParser());
