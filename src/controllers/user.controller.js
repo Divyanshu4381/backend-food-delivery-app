@@ -309,10 +309,8 @@ export const updatePassword=asyncHandler(async(req,res)=>{
     }
     const isPasswordValid = await user.isPasswordCorrect(oldPassword);
     if(!isPasswordValid){
-        res.json(
-            
-            throw new ApiError(400,"Sorry, the old password you entered doesn't match our records.")
-        )
+        
+        throw new ApiError(400,"Sorry, the old password you entered doesn't match our records.")
     }
     if(newPassword!==confirmPassword){
         throw new ApiError(400,"new Password or confirm password are not match")
