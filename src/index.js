@@ -1,6 +1,5 @@
 import dotenv from 'dotenv';
 dotenv.config({path:'../env'})
-import app from './app.js'
 import { PORT } from './utils/constant.js';
 import ConnectDB from './config/dbConnect.js';
 import userRoutes from './routes/user.routes.js'
@@ -12,6 +11,8 @@ import cors from "cors"
 import cookieParser from 'cookie-parser';
 import { Server } from "socket.io";
 import { createServer } from "http";
+import express from 'express';
+const app=express();
 
 const httpServer = createServer(app);
 
@@ -34,9 +35,10 @@ const corsOptions = {
 };
 
 const io=new Server(httpServer,cors(corsOptions))
-
+app.use(express.json());
 app.use(cors(corsOptions))
 app.use(cookieParser());
+app.use(express.urlencoded({extended:true}))
 
 
 
