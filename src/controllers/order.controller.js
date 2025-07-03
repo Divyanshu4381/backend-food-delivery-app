@@ -6,7 +6,7 @@ import ApiError from "../utils/ApiError.js";
 
 export const placeOrder = asyncHandler(async (req, res) => {
   const customerId = req.user._id;
-  const {discountCoupon, deliveryLocation, paymentMethod, paymentId } = req.body;
+  const { discountCoupon, deliveryLocation, paymentMethod, paymentId } = req.body;
 
   const cart = await Cart.findOne({ customerId }).populate("items.productId");
 
@@ -16,8 +16,8 @@ export const placeOrder = asyncHandler(async (req, res) => {
 
   // Find Frenchies from first item (assuming all products same Frenchies)
   const frenchiesId = cart.items[0].productId.Frenchies;
-  const productCoupon=cart.items[0].productId.discountCoupon;
-  
+  const productCoupon = cart.items[0].productId.discountCoupon;
+
   const orderItems = cart.items.map((item) => ({
     productId: item.productId._id,
     quantity: item.quantity,
@@ -29,12 +29,12 @@ export const placeOrder = asyncHandler(async (req, res) => {
     0
   );
   let totalAmount;
-  const discount=50
-  if(discountCoupon==productCoupon){
-    
-    totalAmount = amount-discount; 
-  }else{
-    totalAmount=amount
+  const discount = 50
+  if (discountCoupon == productCoupon) {
+
+    totalAmount = amount - discount;
+  } else {
+    totalAmount = amount
   }
 
   const newOrder = await Order.create({
@@ -53,7 +53,8 @@ export const placeOrder = asyncHandler(async (req, res) => {
   });
 
   // Clear cart after order placed
-  await Cart.findOneAndDelete({ customerId  });
+  
+  await Cart.findOneAndDelete({ customerId });
 
 
   return res.status(201).json(
@@ -61,6 +62,18 @@ export const placeOrder = asyncHandler(async (req, res) => {
   );
 });
 
-export const fetchOrderByFrenchies=asyncHandler(async(req,res)=>{
-    const order=await Order.findOne({});
-})  
+export const fetchOrderByFrenchies = asyncHandler(async (req, res) => {
+    const frenchiesId = req.user?._id;
+
+    if (!frenchiesId) {
+        throw new ApiError(401, "Unauthorized: Frenchies ID not found.");
+    }
+
+    const orders = await Order.find({ frenchiesId })
+        .populate("customerId") // make sure Customer model is registered
+        .sort({ createdAt: -1 });
+
+    res.status(200).json(
+        new ApiResponse(200, orders, "Orders fetched successfully.")
+    );
+});
