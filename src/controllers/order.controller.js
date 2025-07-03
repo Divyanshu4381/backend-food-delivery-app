@@ -70,7 +70,6 @@ export const fetchOrderByFrenchies = asyncHandler(async (req, res) => {
     }
 
     const orders = await Order.find({ frenchiesId })
-        .populate("customerId") // make sure Customer model is registered
         .sort({ createdAt: -1 });
 
     res.status(200).json(
