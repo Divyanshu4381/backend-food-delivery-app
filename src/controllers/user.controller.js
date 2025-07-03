@@ -202,7 +202,7 @@ export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
         $push: { frenchies: newFrenchies._id }
     });
     return res.status(201).json(
-        new ApiResponse(200, { user: newAdmin }, "Frenchies created successfully", true)
+        new ApiResponse(200,  "Frenchies created successfully",{ user: newAdmin }, true)
 
     )
 
@@ -292,7 +292,37 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
     }
 })
 
+export const updatePassword=asyncHandler(async(req,res)=>{
+    const {oldPassword,newPassword,confirmPassword}=req.body;
+    const userId=req.user?._id;
+    const userRole=req.user?.role;
+    if(!oldPassword|| !newPassword || !confirmPassword){
+        throw new ApiError(400,"Please provide old password, new password, and confirm password.")
+    }
+    let user;
+    if(userRole==="superAdmin"){
+        user=await SuperAdmin.findById(userId)
+    }else if(userRole==="frenchies"){
+        user=await Frenchies.findById(userId)
+    }else{
+        throw new ApiError(404,"unauthoried user ")
+    }
+    const isPasswordValid = await user.isPasswordCorrect(oldPassword);
+    if(!isPasswordValid){
+        throw new ApiError(400,"Sorry, the old password you entered doesn't match our records.")
+    }
+    if(newPassword!==confirmPassword){
+        throw new ApiError(400,"new Password or confirm password are not match")
+    }
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
 
+    res.status(200).json(
+        new ApiResponse(200,  "Password updated successfully.",{user})
+    );
+
+
+})
 // CRUD operation set for frenchie
 
 export const updateDetailsFrenchie = asyncHandler(async (req, res) => {
@@ -513,3 +543,4 @@ export const getCurrentUserDetails = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, user, "User details fetched successfully"));
 });
+
