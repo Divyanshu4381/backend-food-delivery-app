@@ -87,19 +87,19 @@ const frenchiesSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product'
     }],
-    customerId:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"User"
-    },
+    customers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
 
     salesCount: {
         type: Number,
         default: 0
     },
-    status:{
-        type:String,
-        enum:["Approved","Rejected","Pending"],
-        default:"Pending"
+    status: {
+        type: String,
+        enum: ["Approved", "Rejected", "Pending"],
+        default: "Pending"
     },
 
     isActivated: {

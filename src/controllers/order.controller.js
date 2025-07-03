@@ -3,6 +3,7 @@ import { Cart } from "../models/cart.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
+import { Frenchies } from "../models/user.model.js";
 
 export const placeOrder = asyncHandler(async (req, res) => {
   const customerId = req.user._id;
@@ -52,10 +53,12 @@ export const placeOrder = asyncHandler(async (req, res) => {
     statusHistory: [{ status: "confirmed", timestamp: new Date() }],
   });
 
-  // Clear cart after order placed
-  
-  await Cart.findOneAndDelete({ customerId });
 
+  await Cart.findOneAndDelete({ customerId });
+  await Frenchies.findByIdAndUpdate(
+    frenchiesId,
+    { $addToSet: { customers: customerId } } // prevents duplicates
+  );
 
   return res.status(201).json(
     new ApiResponse(201, newOrder, "Order placed successfully")
@@ -63,16 +66,16 @@ export const placeOrder = asyncHandler(async (req, res) => {
 });
 
 export const fetchOrderByFrenchies = asyncHandler(async (req, res) => {
-    const frenchiesId = req.user?._id;
+  const frenchiesId = req.user?._id;
 
-    if (!frenchiesId) {
-        throw new ApiError(401, "Unauthorized: Frenchies ID not found.");
-    }
+  if (!frenchiesId) {
+    throw new ApiError(401, "Unauthorized: Frenchies ID not found.");
+  }
 
-    const orders = await Order.find({ frenchiesId })
-        .sort({ createdAt: -1 });
+  const orders = await Order.find({ frenchiesId })
+    .sort({ createdAt: -1 });
 
-    res.status(200).json(
-        new ApiResponse(200, orders, "Orders fetched successfully.")
-    );
+  res.status(200).json(
+    new ApiResponse(200, orders, "Orders fetched successfully.")
+  );
 });
