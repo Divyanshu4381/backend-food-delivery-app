@@ -6,7 +6,7 @@ import ApiError from "../utils/ApiError.js";
 
 export const placeOrder = asyncHandler(async (req, res) => {
   const customerId = req.user._id;
-  const {discount, deliveryLocation, paymentMethod, paymentId } = req.body;
+  const {discountCoupon, deliveryLocation, paymentMethod, paymentId } = req.body;
 
   const cart = await Cart.findOne({ customerId }).populate("items.productId");
 
@@ -16,7 +16,8 @@ export const placeOrder = asyncHandler(async (req, res) => {
 
   // Find Frenchies from first item (assuming all products same Frenchies)
   const frenchiesId = cart.items[0].productId.Frenchies;
-
+  const productCoupon=cart.items[0].productId.discountCoupon;
+  
   const orderItems = cart.items.map((item) => ({
     productId: item.productId._id,
     quantity: item.quantity,
@@ -27,8 +28,14 @@ export const placeOrder = asyncHandler(async (req, res) => {
     (total, item) => total + item.quantity * item.price,
     0
   );
-
-  const totalAmount = amount-discount; // for now no discount logic
+  let totalAmount;
+  const discount=50
+  if(discountCoupon==productCoupon){
+    
+    totalAmount = amount-discount; 
+  }else{
+    totalAmount=amount
+  }
 
   const newOrder = await Order.create({
     orderId: "ORD" + Date.now(),
@@ -53,3 +60,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
     new ApiResponse(201, newOrder, "Order placed successfully")
   );
 });
+
+export const fetchOrderByFrenchies=asyncHandler(async(req,res)=>{
+  
+})
