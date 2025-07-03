@@ -318,7 +318,7 @@ export const updatePassword=asyncHandler(async(req,res)=>{
     await user.save({ validateBeforeSave: false });
 
     res.status(200).json(
-        new ApiResponse(200,  "Password updated successfully.",{user})
+        new ApiResponse(200,  {user},"Password updated successfully.",)
     );
 
 

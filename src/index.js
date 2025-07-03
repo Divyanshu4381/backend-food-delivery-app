@@ -10,6 +10,10 @@ import cartRoutes from './routes/cart.routes.js'
 import orderRoutes from './routes/order.routes.js'
 import cors from "cors"
 import cookieParser from 'cookie-parser';
+import { Server } from "socket.io";
+import { createServer } from "http";
+
+const httpServer = createServer(app);
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -29,6 +33,7 @@ const corsOptions = {
   credentials: true,
 };
 
+const io=new Server(httpServer,cors(corsOptions))
 
 app.use(cors(corsOptions))
 app.use(cookieParser());
