@@ -62,5 +62,5 @@ export const placeOrder = asyncHandler(async (req, res) => {
 });
 
 export const fetchOrderByFrenchies=asyncHandler(async(req,res)=>{
-  
-})
+    const order=await Order.findOne({});
+})  
