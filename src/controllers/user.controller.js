@@ -325,33 +325,42 @@ export const updatePassword=asyncHandler(async(req,res)=>{
 })
 // CRUD operation set for frenchie
 
+
 export const updateDetailsFrenchie = asyncHandler(async (req, res) => {
-    const userId = req.user._id
-    const { latitude, longitude, address, password } = req.body;
+    const userId = req.user._id;
+    const {
+        frenchieName,
+        email,
+        
+        address,
+        latitude,
+        longitude,
+    } = req.body;
 
-    if (!latitude || !longitude || !password) {
-        throw new ApiError(400, "Location and Password are required to update Frenchies details.")
-    }
-    const user = await Frenchies.findById(userId)
+    const user = await Frenchies.findById(userId);
     if (!user) {
-        throw new ApiError(404, "Frenchies user not found with the provided ID.")
-    }
-    user.location.coordinates = [parseFloat(longitude), parseFloat(latitude)];
-
-    if (address) {
-        user.address = address;
+        throw new ApiError(404, "Frenchies user not found with the provided ID.");
     }
 
-    user.password = password;
+    if (frenchieName) user.frenchieName = frenchieName;
+    if (email) user.email = email;
+    
+    if (address) user.address = address;
+
+    if (latitude && longitude) {
+        user.location = {
+            type: "Point",
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+        };
+    }
+
     await user.save();
+
     return res.status(200).json(
-        new ApiResponse(
-            200,
-            { user },
-            "Profile Update Successfully"
-        )
-    )
-})
+        new ApiResponse(200, { user }, "Profile updated successfully.")
+    );
+});
+
 
 export const forgetPassword = asyncHandler(async (req, res) => {
     const { email, phone, frenchiesID, password } = req.body;
