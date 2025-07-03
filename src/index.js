@@ -12,6 +12,7 @@ import cookieParser from 'cookie-parser';
 import { Server } from "socket.io";
 import { createServer } from "http";
 import express from 'express';
+import errorHandler from './middlewares/errorHandler.js';
 const app=express();
 
 const httpServer = createServer(app);
@@ -49,6 +50,7 @@ app.use('/api/v1/cart',cartRoutes)
 app.use('/api/v1/order',orderRoutes)
 // http://localhost:5000/api/v1/users/register
 
+app.use(errorHandler)
 ConnectDB().then(()=>{
     app.listen(PORT,()=>
     console.log(`App is listening on ${PORT}`))
