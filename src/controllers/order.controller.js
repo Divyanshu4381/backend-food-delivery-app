@@ -85,8 +85,8 @@ export const fetchOrderByCustomer = asyncHandler(async (req, res) => {
   )
 });
 
-export const deleteOrderByCustomer=asyncHandler(async(req,res)=>{})
-export const cancelOrderByCustomer=asyncHandler(async(req,res)=>{})
+export const deleteOrderByCustomer = asyncHandler(async (req, res) => { })
+export const cancelOrderByCustomer = asyncHandler(async (req, res) => { })
 
 
 
@@ -105,10 +105,44 @@ export const fetchOrderByFrenchies = asyncHandler(async (req, res) => {
     new ApiResponse(200, orders, "Orders fetched successfully.")
   );
 });
-export const manageOrderByFrenchies=asyncHandler(async(req,res)=>{
+export const manageOrderByFrenchies = asyncHandler(async (req, res) => {
+  const frenchiesId = req.user?._id;
 
-  
-})
+  const { orderId, orderStatus, estimatedDeliveryTime } = req.body;
+
+  if (!frenchiesId) {
+    throw new ApiError(401, "Unauthorized: Frenchies  not found.");
+  }
+  if (!orderId) {
+    throw new ApiError(400, "Order ID is required to update the order.");
+  }
+  const order = await Order.findOne({ _id: orderId, frenchiesId });
+
+  if (!order) {
+    throw new ApiError(404, "Order not found or access denied.");
+  }
+
+
+  if (orderStatus) frenchiesId.orderStatus = orderStatus;
+  if (estimatedDeliveryTime) frenchiesId.estimatedDeliveryTime = estimatedDeliveryTime;
+
+
+  await order.save();
+
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        orderId: order._id,
+        updatedStatus: order.orderStatus,
+        estimatedDeliveryTime: order.estimatedDeliveryTime,
+      },
+      "Order updated successfully"
+    )
+  )
+
+});
 
 
 

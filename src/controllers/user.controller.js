@@ -33,18 +33,19 @@ const generateAccessAndRefreshTokens = async (userId, role) => {
 }
 
 export const generateFrenchiesID = async (cityName) => {
-    const city = cityName.trim().toUpperCase();
+  const city = cityName.trim().toUpperCase();
+  let count = await Frenchies.countDocuments({ address: { $regex: city, $options: 'i' } });
+  let frenchiesID = '';
+  let exists = true;
 
-    // Count existing frenchies for this city
-    const count = await Frenchies.countDocuments({ address: { $regex: city, $options: 'i' } });
+  while (exists) {
+    count++;
+    const nextNumber = count.toString().padStart(3, '0');
+    frenchiesID = `${city}-${nextNumber}`;
+    exists = await Frenchies.findOne({ frenchiesID });
+  }
 
-    // Next number
-    const nextNumber = (count + 1).toString().padStart(3, '0');  // Eg: 001, 002, 003
-
-    // Final Frenchies ID
-    const frenchiesID = `${city}-${nextNumber}`;
-
-    return frenchiesID;
+  return frenchiesID;
 };
 
 export const registerSuperAdmin = asyncHandler(async (req, res) => {
