@@ -73,7 +73,7 @@ export const fetchOrderByCustomer = asyncHandler(async (req, res) => {
   if (!customerId) {
     throw new ApiError(401, "Unauthorized: User not found.")
   }
-  const orders = await Order.findById({ customerId }).sort({ createdAt: -1 });
+  const orders = await Order.find({ customerId }).sort({ createdAt: -1 });
   if (!orders || orders.length === 0) {
     throw new ApiError(404, "No orders found for this customer.")
   }
