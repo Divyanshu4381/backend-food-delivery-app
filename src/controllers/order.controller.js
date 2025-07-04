@@ -105,6 +105,11 @@ export const fetchOrderByFrenchies = asyncHandler(async (req, res) => {
     new ApiResponse(200, orders, "Orders fetched successfully.")
   );
 });
+export const manageOrderByFrenchies=asyncHandler(async(req,res)=>{
+
+  
+})
+
 
 
 
