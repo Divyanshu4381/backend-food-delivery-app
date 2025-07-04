@@ -69,13 +69,31 @@ export const fetchOrderByFrenchies = asyncHandler(async (req, res) => {
   const frenchiesId = req.user?._id;
 
   if (!frenchiesId) {
-    throw new ApiError(401, "Unauthorized: Frenchies ID not found.");
+    throw new ApiError(401, "Unauthorized: Frenchies  not found.");
   }
 
   const orders = await Order.find({ frenchiesId })
     .sort({ createdAt: -1 });
 
-  res.status(200).json(
+  return res.status(200).json(
     new ApiResponse(200, orders, "Orders fetched successfully.")
   );
+});
+
+
+export const fetchOrderByCustomer = asyncHandler(async (req, res) => {
+  const customerId = req.user?._id;
+  if (!customerId) {
+    throw new ApiError(401, "Unauthorized: User not found.")
+  }
+  const orders = await Order.find({ customerId }).sort({ createdAt: -1 });
+  if (!orders || orders.length === 0) {
+    throw new ApiError(404, "No orders found for this customer.")
+  }
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      orders, "Orders fetch successfully"
+    )
+  )
 });
