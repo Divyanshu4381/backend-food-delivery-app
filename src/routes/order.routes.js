@@ -1,5 +1,5 @@
 import Router from "express"
-import {  cancelOrderByCustomer, fetchOrderByCustomer, fetchOrderByFrenchies, manageOrderByFrenchies, placeOrder } from "../controllers/order.controller.js";
+import {  cancelOrderByCustomer, fetchOrderByCustomer, fetchOrderByFrenchies, fetchOrderBySuperAdmin, manageOrderByFrenchies, placeOrder } from "../controllers/order.controller.js";
 import { authorizeRoles, verifyJWT } from "../middlewares/auth.middleware.js";
 const router=Router()
 
@@ -17,5 +17,6 @@ router.get('/manage-order-by-frenchies',verifyJWT,authorizeRoles("frenchies"),ma
 
 
 // SUPER-ADMIN ROUTES
+router.get('/get-order-by-superAdmin/:id',verifyJWT,authorizeRoles("superAdmin"),fetchOrderBySuperAdmin)
 
 export default router;

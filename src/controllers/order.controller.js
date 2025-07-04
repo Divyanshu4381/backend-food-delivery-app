@@ -3,7 +3,7 @@ import { Cart } from "../models/cart.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
-import { Frenchies } from "../models/user.model.js";
+import { Frenchies, SuperAdmin } from "../models/user.model.js";
 
 
 // order handle by Controller
@@ -58,10 +58,11 @@ export const placeOrder = asyncHandler(async (req, res) => {
   await Cart.findOneAndDelete({ customerId });
   await Frenchies.findByIdAndUpdate(
     frenchiesId,
-    { $addToSet: { customers: customerId,orders: newOrder._id }
-  }
+    {
+      $addToSet: { customers: customerId, orders: newOrder._id }
+    }
   );
-  
+
 
   return res.status(201).json(
     new ApiResponse(201, newOrder, "Order placed successfully")
@@ -175,24 +176,33 @@ export const manageOrderByFrenchies = asyncHandler(async (req, res) => {
 
 
 
-// order handle by Super Admin Controller
 
 
-// export const fetchOrderBySuperAdmin = asyncHandler(async (req, res) => {
-//   const superAdminId = req.user?._id;
-//   if (!superAdminId) {
-//     throw new ApiError(401, "Unauthorized: User not found.")
-//   }
-//   const orders = await Order.find({ superAdminId }).sort({ createdAt: -1 });
-//   if (!orders || orders.length === 0) {
-//     throw new ApiError(404, "No orders found for this customer.")
-//   }
-//   return res.status(200).json(
-//     new ApiResponse(
-//       200,
-//       orders, "Orders fetch successfully"
-//     )
-//   )
-// });
+export const fetchOrderBySuperAdmin = asyncHandler(async (req, res) => {
+  const frenchiesID  = req.params.id;
 
+  if (!frenchiesID) {
+    throw new ApiError(400, "Frenchies ID is required in URL.");
+  }
 
+  // Step 1: Find Frenchies and populate orders
+  const frenchies = await Frenchies.findById(frenchiesID).populate({
+    path: "orders",
+    model: "Order",
+    
+  });
+
+  if (!frenchies || !frenchies.orders) {
+    throw new ApiError(404, "Frenchies or orders not found.");
+  }
+
+  const orders = frenchies.orders;
+
+  if (orders.length === 0) {
+    throw new ApiError(404, "No orders found for this Frenchies.");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, orders, "Orders fetched successfully")
+  );
+});
