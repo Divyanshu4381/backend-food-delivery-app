@@ -115,8 +115,10 @@ export const userLogin = asyncHandler(async (req, res) => {
     // Frenchies Admin Login
 
     user = await Frenchies.findOne({ phone });
-
     if (user) {
+        if(!user.isActivated){
+            throw new ApiError(400,"Your account has been deactivated. Please contact the Super Admin.")
+        }
         if (!password) throw new ApiError(400, "Password is required for Admin");
         const isPasswordValid = await user.isPasswordCorrect(password);
         if (!isPasswordValid) throw new ApiError(401, "Invalid credentials for Frenchies Admin");
@@ -471,9 +473,52 @@ export const getSingleFrenchies = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, frenchies, "Frenchies fetched successfully"));
 });
 
+export const updateFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
+  const superAdminId = req.user._id;
+
+  if (req.user.role !== "superAdmin") {
+    throw new ApiError(403, "Access denied. Only SuperAdmin can perform this action.");
+  }
+
+  const { frenchiesId } = req.params; // /update-frenchies/:frenchiesId
+  const updateData = req.body;
+
+  const frenchies = await Frenchies.findById(frenchiesId);
+  if (!frenchies) {
+    throw new ApiError(404, "Frenchies not found");
+  }
+
+  // Update only allowed fields
+  const allowedFields = [
+    "email",
+    "frenchieName",
+    "ownerName",
+    "city",
+    "state",
+    "country",
+    "address",
+    "contact_no",
+    "status",
+    "isActivated",
+    "profilePhoto"
+  ];
+
+  allowedFields.forEach((field) => {
+    if (updateData[field] !== undefined) {
+      frenchies[field] = updateData[field];
+    }
+  });
+
+  await frenchies.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, frenchies, "Frenchies updated successfully")
+  );
+});
 
 export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
     const { action, frenchiesID, updateData, status } = req.body;
+    
     if (!action || !frenchiesID) {
         throw new ApiError(400, "Action and FrenchiesID are required.");
 

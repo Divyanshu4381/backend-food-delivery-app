@@ -55,12 +55,13 @@ export const placeOrder = asyncHandler(async (req, res) => {
     statusHistory: [{ status: "confirmed", timestamp: new Date() }],
   });
 
-
   await Cart.findOneAndDelete({ customerId });
   await Frenchies.findByIdAndUpdate(
     frenchiesId,
-    { $addToSet: { customers: customerId } }
+    { $addToSet: { customers: customerId,orders: newOrder._id }
+  }
   );
+  
 
   return res.status(201).json(
     new ApiResponse(201, newOrder, "Order placed successfully")
