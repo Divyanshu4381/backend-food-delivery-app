@@ -73,7 +73,7 @@ export const fetchOrderByCustomer = asyncHandler(async (req, res) => {
   if (!customerId) {
     throw new ApiError(401, "Unauthorized: User not found.")
   }
-  const orders = await Order.find({ customerId }).sort({ createdAt: -1 });
+  const orders = await Order.findById({ customerId }).sort({ createdAt: -1 });
   if (!orders || orders.length === 0) {
     throw new ApiError(404, "No orders found for this customer.")
   }
@@ -85,8 +85,35 @@ export const fetchOrderByCustomer = asyncHandler(async (req, res) => {
   )
 });
 
-export const deleteOrderByCustomer = asyncHandler(async (req, res) => { })
-export const cancelOrderByCustomer = asyncHandler(async (req, res) => { })
+export const cancelOrderByCustomer = asyncHandler(async (req, res) => {
+  const customerId = req.user?._id;
+  const { orderId } = req.body;
+
+  if (!customerId) {
+    throw new ApiError(401, "Unauthorized: Customer not found.");
+  }
+
+  if (!orderId) {
+    throw new ApiError(400, "Order ID is required.");
+  }
+
+  const order = await Order.findOne({ _id: orderId, customerId });
+
+  if (!order) {
+    throw new ApiError(404, "Order not found or access denied.");
+  }
+
+  if (order.orderStatus === "Cancelled") {
+    throw new ApiError(400, "Order is already cancelled.");
+  }
+
+  order.orderStatus = "Cancelled";
+  await order.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, order, "Order cancelled successfully.")
+  );
+});
 
 
 
@@ -98,7 +125,7 @@ export const fetchOrderByFrenchies = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Unauthorized: Frenchies  not found.");
   }
 
-  const orders = await Order.find({ frenchiesId })
+  const orders = await Order.findById({ frenchiesId })
     .sort({ createdAt: -1 });
 
   return res.status(200).json(
