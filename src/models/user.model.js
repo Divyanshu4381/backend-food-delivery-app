@@ -99,7 +99,7 @@ const frenchiesSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     }],
-
+    
     salesCount: {
         type: Number,
         default: 0

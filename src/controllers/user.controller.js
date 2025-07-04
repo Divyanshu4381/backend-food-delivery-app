@@ -6,6 +6,7 @@ import { SuperAdmin } from "../models/user.model.js";
 import jwt from 'jsonwebtoken'
 import mongoose from "mongoose";
 import { uploadOnCloudinary } from "../config/cloudinary.js";
+import FrenchiesCounter from "../models/frenchiesCounter.model.js";
 
 const generateAccessAndRefreshTokens = async (userId, role) => {
 
@@ -32,20 +33,22 @@ const generateAccessAndRefreshTokens = async (userId, role) => {
     }
 }
 
+
 export const generateFrenchiesID = async (cityName) => {
-  const city = cityName.trim().toUpperCase();
+  const city = cityName.trim().toUpperCase().replace(/\s+/g, "-");
 
   const counter = await FrenchiesCounter.findOneAndUpdate(
     { city },
     { $inc: { count: 1 } },
-    { new: true, upsert: true }
+    { new: true, upsert: true } // atomic & creates if not exists
   );
 
-  const nextNumber = counter.count.toString().padStart(3, '0');
+  const nextNumber = counter.count.toString().padStart(3, '0'); // Eg: 001
   const frenchiesID = `${city}-${nextNumber}`;
 
   return frenchiesID;
 };
+
 
 export const registerSuperAdmin = asyncHandler(async (req, res) => {
     const { phone, email, password } = req.body;
