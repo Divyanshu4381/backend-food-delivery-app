@@ -36,7 +36,7 @@ const frenchiesSchema = new mongoose.Schema({
     frenchieName: {
         type: String,
         required: true,
-        unique: true,
+        // unique: true,
         index: true
     },
     profilePhoto:{
@@ -99,7 +99,7 @@ const frenchiesSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     }],
-    
+
     salesCount: {
         type: Number,
         default: 0
