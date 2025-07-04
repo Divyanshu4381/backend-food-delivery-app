@@ -34,16 +34,15 @@ const generateAccessAndRefreshTokens = async (userId, role) => {
 
 export const generateFrenchiesID = async (cityName) => {
   const city = cityName.trim().toUpperCase();
-  let count = await Frenchies.countDocuments({ address: { $regex: city, $options: 'i' } });
-  let frenchiesID = '';
-  let exists = true;
 
-  while (exists) {
-    count++;
-    const nextNumber = count.toString().padStart(3, '0');
-    frenchiesID = `${city}-${nextNumber}`;
-    exists = await Frenchies.findOne({ frenchiesID });
-  }
+  const counter = await FrenchiesCounter.findOneAndUpdate(
+    { city },
+    { $inc: { count: 1 } },
+    { new: true, upsert: true }
+  );
+
+  const nextNumber = counter.count.toString().padStart(3, '0');
+  const frenchiesID = `${city}-${nextNumber}`;
 
   return frenchiesID;
 };
