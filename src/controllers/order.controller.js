@@ -5,6 +5,8 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import { Frenchies } from "../models/user.model.js";
 
+
+// order handle by Controller
 export const placeOrder = asyncHandler(async (req, res) => {
   const customerId = req.user._id;
   const { discountCoupon, deliveryLocation, paymentMethod, paymentId } = req.body;
@@ -65,21 +67,6 @@ export const placeOrder = asyncHandler(async (req, res) => {
   );
 });
 
-export const fetchOrderByFrenchies = asyncHandler(async (req, res) => {
-  const frenchiesId = req.user?._id;
-
-  if (!frenchiesId) {
-    throw new ApiError(401, "Unauthorized: Frenchies  not found.");
-  }
-
-  const orders = await Order.find({ frenchiesId })
-    .sort({ createdAt: -1 });
-
-  return res.status(200).json(
-    new ApiResponse(200, orders, "Orders fetched successfully.")
-  );
-});
-
 
 export const fetchOrderByCustomer = asyncHandler(async (req, res) => {
   const customerId = req.user?._id;
@@ -99,19 +86,44 @@ export const fetchOrderByCustomer = asyncHandler(async (req, res) => {
 });
 
 
-export const fetchOrderBySuperAdmin = asyncHandler(async (req, res) => {
-  const superAdminId = req.user?._id;
-  if (!superAdminId) {
-    throw new ApiError(401, "Unauthorized: User not found.")
+
+
+// order handle by Frenchies Controller
+export const fetchOrderByFrenchies = asyncHandler(async (req, res) => {
+  const frenchiesId = req.user?._id;
+
+  if (!frenchiesId) {
+    throw new ApiError(401, "Unauthorized: Frenchies  not found.");
   }
-  const orders = await Order.find({ superAdminId }).sort({ createdAt: -1 });
-  if (!orders || orders.length === 0) {
-    throw new ApiError(404, "No orders found for this customer.")
-  }
+
+  const orders = await Order.find({ frenchiesId })
+    .sort({ createdAt: -1 });
+
   return res.status(200).json(
-    new ApiResponse(
-      200,
-      orders, "Orders fetch successfully"
-    )
-  )
+    new ApiResponse(200, orders, "Orders fetched successfully.")
+  );
 });
+
+
+
+// order handle by Super Admin Controller
+
+
+// export const fetchOrderBySuperAdmin = asyncHandler(async (req, res) => {
+//   const superAdminId = req.user?._id;
+//   if (!superAdminId) {
+//     throw new ApiError(401, "Unauthorized: User not found.")
+//   }
+//   const orders = await Order.find({ superAdminId }).sort({ createdAt: -1 });
+//   if (!orders || orders.length === 0) {
+//     throw new ApiError(404, "No orders found for this customer.")
+//   }
+//   return res.status(200).json(
+//     new ApiResponse(
+//       200,
+//       orders, "Orders fetch successfully"
+//     )
+//   )
+// });
+
+
