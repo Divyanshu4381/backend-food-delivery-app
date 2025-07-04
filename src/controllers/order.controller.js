@@ -85,6 +85,8 @@ export const fetchOrderByCustomer = asyncHandler(async (req, res) => {
   )
 });
 
+export const deleteOrderByCustomer=asyncHandler(async(req,res)=>{})
+export const cancelOrderByCustomer=asyncHandler(async(req,res)=>{})
 
 
 
