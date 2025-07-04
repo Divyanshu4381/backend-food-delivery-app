@@ -107,12 +107,12 @@ const frenchiesSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ["Approved", "Rejected", "Pending"],
-        default: "Pending"
+        default: "Approved"
     },
 
     isActivated: {
         type: Boolean,
-        default: false
+        default: true
     }
 
 

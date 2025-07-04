@@ -97,3 +97,21 @@ export const fetchOrderByCustomer = asyncHandler(async (req, res) => {
     )
   )
 });
+
+
+export const fetchOrderBySuperAdmin = asyncHandler(async (req, res) => {
+  const superAdminId = req.user?._id;
+  if (!superAdminId) {
+    throw new ApiError(401, "Unauthorized: User not found.")
+  }
+  const orders = await Order.find({ superAdminId }).sort({ createdAt: -1 });
+  if (!orders || orders.length === 0) {
+    throw new ApiError(404, "No orders found for this customer.")
+  }
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      orders, "Orders fetch successfully"
+    )
+  )
+});
