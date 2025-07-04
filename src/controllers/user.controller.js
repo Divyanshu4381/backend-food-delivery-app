@@ -43,7 +43,7 @@ export const generateFrenchiesID = async (cityName) => {
     { new: true, upsert: true } // atomic & creates if not exists
   );
 
-  const nextNumber = counter.count.toString().padStart(3, '0'); // Eg: 001
+  const nextNumber = counter.count.toString().padStart(5, '0'); // Eg: 001
   const frenchiesID = `${city}-${nextNumber}`;
 
   return frenchiesID;
