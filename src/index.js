@@ -35,7 +35,10 @@ const corsOptions = {
   credentials: true,
 };
 
-const io=new Server(httpServer,cors(corsOptions))
+const io = new Server(httpServer, {
+  cors: corsOptions
+});
+
 app.use(express.json());
 app.use(cors(corsOptions))
 app.use(cookieParser());

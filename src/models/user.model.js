@@ -65,7 +65,7 @@ const frenchiesSchema = new mongoose.Schema({
 
     },
     country: {
-        type: String,
+        type: String, 
 
     },
     address: {
