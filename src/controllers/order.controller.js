@@ -125,7 +125,7 @@ export const fetchOrderByFrenchies = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Unauthorized: Frenchies  not found.");
   }
 
-  const orders = await Order.findById({ frenchiesId })
+  const orders = await Order.find({ frenchiesId })
     .sort({ createdAt: -1 });
 
   return res.status(200).json(
