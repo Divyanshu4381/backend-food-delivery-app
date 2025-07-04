@@ -9,7 +9,21 @@ import { Frenchies, SuperAdmin } from "../models/user.model.js";
 // order handle by Controller
 export const placeOrder = asyncHandler(async (req, res) => {
   const customerId = req.user._id;
-  const { discountCoupon, deliveryLocation, paymentMethod, paymentId } = req.body;
+  const {
+    customerName,
+    discountCoupon,
+    deliveryLocation,
+    paymentMethod,
+    paymentId
+  } = req.body;
+
+  if (!customerName || !deliveryLocation || !paymentMethod) {
+    throw new ApiError(400, "customerName, deliveryLocation and paymentMethod are required");
+  }
+
+  if (paymentMethod === "online" && !paymentId) {
+    throw new ApiError(400, "Payment ID is required for online payments.");
+  }
 
   const cart = await Cart.findOne({ customerId }).populate("items.productId");
 
@@ -17,7 +31,6 @@ export const placeOrder = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Cart is empty");
   }
 
-  // Find Frenchies from first item (assuming all products same Frenchies)
   const frenchiesId = cart.items[0].productId.Frenchies;
   const productCoupon = cart.items[0].productId.discountCoupon;
 
@@ -31,43 +44,45 @@ export const placeOrder = asyncHandler(async (req, res) => {
     (total, item) => total + item.quantity * item.price,
     0
   );
-  let totalAmount;
-  const discount = 50
-  if (discountCoupon == productCoupon) {
 
-    totalAmount = amount - discount;
-  } else {
-    totalAmount = amount
-  }
+  const discount = 50;
+  const totalAmount = discountCoupon === productCoupon
+    ? amount - discount
+    : amount;
 
   const newOrder = await Order.create({
     orderId: "ORD" + Date.now(),
+    customerName,
     customerId,
     frenchiesId,
     orderItems,
-    deliveryLocation, // {coordinates, address, landmark}
+    deliveryLocation,
     discount,
     amount,
     totalAmount,
     paymentMethod,
-    paymentId: paymentId || null,
+    paymentId: paymentMethod === "online" ? paymentId : null,
     paymentStatus: paymentMethod === "COD" ? "pending" : "success",
     statusHistory: [{ status: "confirmed", timestamp: new Date() }],
   });
 
   await Cart.findOneAndDelete({ customerId });
+
   await Frenchies.findByIdAndUpdate(
     frenchiesId,
     {
-      $addToSet: { customers: customerId, orders: newOrder._id }
+      $addToSet: {
+        customers: customerId,
+        orders: newOrder._id
+      }
     }
   );
-
 
   return res.status(201).json(
     new ApiResponse(201, newOrder, "Order placed successfully")
   );
 });
+
 
 
 export const fetchOrderByCustomer = asyncHandler(async (req, res) => {
