@@ -12,6 +12,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
   const {
     customerName,
     discountCoupon,
+    discount,
     deliveryLocation,
     paymentMethod,
     paymentId
@@ -46,7 +47,6 @@ export const placeOrder = asyncHandler(async (req, res) => {
     0
   );
 
-  const discount = 50;
   const totalAmount = discountCoupon === productCoupon
     ? amount - discount
     : amount;
