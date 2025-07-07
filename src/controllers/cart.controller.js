@@ -7,7 +7,8 @@ import asyncHandler from "../utils/asyncHandler.js";
 // ✅ Add or Create Cart Item
 export const addToCart = asyncHandler(async (req, res) => {
   const customerId = req.user?._id;
-  const { productId, quantity } = req.body;
+  const productId = req.params.productId;
+  const { quantity } = req.body;
 
   if (!productId || !quantity) {
     throw new ApiError(400, "Product ID and quantity are required");
@@ -19,7 +20,6 @@ export const addToCart = asyncHandler(async (req, res) => {
   }
 
   let cart = await Cart.findOne({ customerId });
-
   if (!cart) {
     cart = new Cart({ customerId, items: [] });
   }
@@ -45,17 +45,18 @@ export const addToCart = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, cart, "Product added to cart successfully"));
 });
 
+
 // ✅ Update Cart Item Quantity
 export const updateCartItemQuantity = asyncHandler(async (req, res) => {
   const customerId = req.user?._id;
-  const { productId, quantity } = req.body;
+  const productId = req.params.productId;
+  const { quantity } = req.body;
 
   if (!productId || quantity == null) {
     throw new ApiError(400, "Product ID and new quantity are required");
   }
 
   const cart = await Cart.findOne({ customerId });
-
   if (!cart) {
     throw new ApiError(404, "Cart not found");
   }
@@ -69,7 +70,6 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
   }
 
   if (quantity <= 0) {
-    // ✅ Auto Remove if quantity zero
     cart.items = cart.items.filter(
       (item) => item.productId.toString() !== productId
     );
@@ -87,23 +87,20 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
 // ✅ Remove Single Product from Cart
 export const removeFromCart = asyncHandler(async (req, res) => {
   const customerId = req.user?._id;
-  const { productId } = req.body;
+  const productId = req.params.productId;
 
   if (!productId) {
     throw new ApiError(400, "Product ID is required");
   }
 
   const cart = await Cart.findOne({ customerId });
-
   if (!cart) {
     throw new ApiError(404, "Cart not found");
   }
 
-  const newItems = cart.items.filter(
+  cart.items = cart.items.filter(
     (item) => item.productId.toString() !== productId
   );
-
-  cart.items = newItems;
 
   await cart.save();
 

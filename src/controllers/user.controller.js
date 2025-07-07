@@ -411,58 +411,59 @@ export const forgetPassword = asyncHandler(async (req, res) => {
 // CRUD opeation set for SuperAdmin
 
 export const getAllFrenchies = asyncHandler(async (req, res) => {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
 
-    const superAdminId = req.user?._id;
+  const superAdminId = req.user?._id;
 
-    if (!superAdminId) {
-        return res.status(400).json({
-            success: false,
-            message: "SuperAdmin ID missing from request."
-        });
-    }
-
-    // Step 1: Aggregate pipeline
-    const aggregateQuery = SuperAdmin.aggregate([
-        {
-            $match: {
-                _id: new mongoose.Types.ObjectId(String(superAdminId))
-            }
-        },
-        {
-            $lookup: {
-                from: "frenchies",
-                localField: "frenchies",
-                foreignField: "_id",
-                as: "frenchiesList"
-            }
-        },
-        {
-            $unwind: "$frenchiesList"
-        },
-        {
-            $replaceRoot: { newRoot: "$frenchiesList" }
-        }
-    ]);
-
-    // Step 2: Pagination Options
-    const options = {
-        page,
-        limit
-    };
-
-    // Step 3: Execute Paginated Aggregate Query
-    const result = await SuperAdmin.aggregatePaginate(aggregateQuery, options);
-
-    return res.status(200).json({
-        success: true,
-        totalDocs: result.totalDocs,
-        totalPages: result.totalPages,
-        currentPage: result.page,
-        data: result.docs
+  if (!superAdminId) {
+    return res.status(400).json({
+      success: false,
+      message: "SuperAdmin ID missing from request."
     });
+  }
+
+  const aggregateQuery = SuperAdmin.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(String(superAdminId))
+      }
+    },
+    {
+      $lookup: {
+        from: "frenchies",
+        localField: "frenchies",
+        foreignField: "_id",
+        as: "frenchiesList"
+      }
+    },
+    {
+      $unwind: "$frenchiesList"
+    },
+    {
+      $replaceRoot: { newRoot: "$frenchiesList" }
+    },
+    {
+      $sort: { createdAt: -1 } // ✅ Sort by latest created first
+    }
+  ]);
+
+  const options = {
+    page,
+    limit
+  };
+
+  const result = await SuperAdmin.aggregatePaginate(aggregateQuery, options);
+
+  return res.status(200).json({
+    success: true,
+    totalDocs: result.totalDocs,
+    totalPages: result.totalPages,
+    currentPage: result.page,
+    data: result.docs
+  });
 });
+
 // get frenchies by id
 export const getSingleFrenchies = asyncHandler(async (req, res) => {
     const frenchyId = req.params.id;

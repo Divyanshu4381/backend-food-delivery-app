@@ -10,11 +10,11 @@ import { verifyJWT,authorizeRoles } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/add", verifyJWT,authorizeRoles("customer"), addToCart);
+router.post("/add/:productId", verifyJWT,authorizeRoles("customer"), addToCart);
 
-router.put("/update", verifyJWT,authorizeRoles("customer"), updateCartItemQuantity);
+router.put("/update/:productId", verifyJWT,authorizeRoles("customer"), updateCartItemQuantity);
 
-router.delete("/remove", verifyJWT,authorizeRoles("customer"), removeFromCart);
+router.delete("/remove/:productId", verifyJWT,authorizeRoles("customer"), removeFromCart);
 
 router.delete("/clear", verifyJWT,authorizeRoles("customer"), clearCart);
 
