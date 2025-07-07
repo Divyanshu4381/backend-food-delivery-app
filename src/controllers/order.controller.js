@@ -35,6 +35,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
   const productCoupon = cart.items[0].productId.discountCoupon;
 
   const orderItems = cart.items.map((item) => ({
+    
     productId: item.productId._id,
     quantity: item.quantity,
     price: item.priceAtTime,
@@ -194,30 +195,57 @@ export const manageOrderByFrenchies = asyncHandler(async (req, res) => {
 
 
 export const fetchOrderBySuperAdmin = asyncHandler(async (req, res) => {
-  const frenchiesID  = req.params.id;
+  const frenchiesID = req.params.id;
 
   if (!frenchiesID) {
     throw new ApiError(400, "Frenchies ID is required in URL.");
   }
 
-  // Step 1: Find Frenchies and populate orders
+  // Step 1: Find Frenchies with orders populated (with nested population)
   const frenchies = await Frenchies.findById(frenchiesID).populate({
     path: "orders",
     model: "Order",
-    
+    populate: [
+      {
+        path: "customerId",
+        model: "User",
+        select: "name phone"
+      },
+      {
+        path: "orderItems.productId",
+        model: "Product",
+        select: "name image"
+      }
+    ]
   });
 
   if (!frenchies || !frenchies.orders) {
     throw new ApiError(404, "Frenchies or orders not found.");
   }
 
-  const orders = frenchies.orders;
+  const originalOrders = frenchies.orders;
 
-  if (orders.length === 0) {
+  if (originalOrders.length === 0) {
     throw new ApiError(404, "No orders found for this Frenchies.");
   }
 
+  // Step 2: Modify each order to keep only name & image inside orderItems
+  const modifiedOrders = originalOrders.map(order => {
+    const modifiedItems = order.orderItems.map(item => ({
+      _id: item._id,
+      quantity: item.quantity,
+      price: item.price,
+      name: item.productId?.name || "",
+      image: item.productId?.image || ""
+    }));
+
+    return {
+      ...order._doc,
+      orderItems: modifiedItems
+    };
+  });
+
   return res.status(200).json(
-    new ApiResponse(200, orders, "Orders fetched successfully")
+    new ApiResponse(200, modifiedOrders, "Orders fetched successfully")
   );
 });
