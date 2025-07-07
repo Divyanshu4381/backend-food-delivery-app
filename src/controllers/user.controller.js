@@ -448,6 +448,10 @@ export const getAllFrenchies = asyncHandler(async (req, res) => {
     }
   ]);
 
+  const totalDocs = frenchiesList.length;
+  const totalApproved = frenchiesList.filter(f => f.status === "Approved").length;
+  const totalPending = frenchiesList.filter(f => f.status === "Pending").length;
+
   const options = {
     page,
     limit
@@ -458,6 +462,9 @@ export const getAllFrenchies = asyncHandler(async (req, res) => {
   return res.status(200).json({
     success: true,
     totalDocs: result.totalDocs,
+    totalDocs,
+    totalApproved,
+    totalPending,
     totalPages: result.totalPages,
     currentPage: result.page,
     data: result.docs
