@@ -444,14 +444,11 @@ export const getAllFrenchies = asyncHandler(async (req, res) => {
       $replaceRoot: { newRoot: "$frenchiesList" }
     },
     {
-      $sort: { createdAt: -1 } // ✅ Sort by latest created first
+      $sort: { createdAt: -1 }
     }
   ]);
 
-  const totalDocs = frenchiesList.length;
-  const totalApproved = frenchiesList.filter(f => f.status === "Approved").length;
-  const totalPending = frenchiesList.filter(f => f.status === "Pending").length;
-
+  // Paginate
   const options = {
     page,
     limit
@@ -459,10 +456,13 @@ export const getAllFrenchies = asyncHandler(async (req, res) => {
 
   const result = await SuperAdmin.aggregatePaginate(aggregateQuery, options);
 
+  const totalDocs = result.docs.length;
+  const totalApproved = result.docs.filter(f => f.status === "Approved").length;
+  const totalPending = result.docs.filter(f => f.status === "Pending").length;
+
   return res.status(200).json({
     success: true,
     totalDocs: result.totalDocs,
-    totalDocs,
     totalApproved,
     totalPending,
     totalPages: result.totalPages,
