@@ -149,7 +149,7 @@ const superAdminSchema = new mongoose.Schema({
         type: String,
     }
 
-})
+},{timestamps:true})
 
 
 frenchiesSchema.pre('save', async function (next) {
