@@ -139,43 +139,43 @@ export const userLogin = asyncHandler(async (req, res) => {
     }
 
     // Customer Login
-    user = await User.findOne({ phone });
+    // user = await User.findOne({ phone });
 
-    if (!user) {
-        // User doesn't exist, create new customer
-        user = await User.create({ phone, role: "customer" });
-    }
+    // if (!user) {
+    //     // User doesn't exist, create new customer
+    //     user = await User.create({ phone, role: "customer" });
+    // }
 
-    const accessToken = jwt.sign({
-        _id: user._id,
-        phone: user.phone,
-        role: user.role
+    // const accessToken = jwt.sign({
+    //     _id: user._id,
+    //     phone: user.phone,
+    //     role: user.role
 
-    },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "7d" }
-    )
-    const refreshToken = jwt.sign({
-        _id: user._id,
-        phone: user.phone,
-        role: user.role
+    // },
+    //     process.env.ACCESS_TOKEN_SECRET,
+    //     { expiresIn: "7d" }
+    // )
+    // const refreshToken = jwt.sign({
+    //     _id: user._id,
+    //     phone: user.phone,
+    //     role: user.role
 
-    },
-        process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: "30d" }
-    )
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
-    const options = {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        path: '/'
-    }
-    return res.status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
-        .json(new ApiResponse(200, { user: loggedInUser,accessToken,
-        refreshToken  }, "Customer Login Successful"));
+    // },
+    //     process.env.REFRESH_TOKEN_SECRET,
+    //     { expiresIn: "30d" }
+    // )
+    // const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+    // const options = {
+    //     httpOnly: true,
+    //     secure: true,
+    //     sameSite: "None",
+    //     path: '/'
+    // }
+    // return res.status(200)
+    //     .cookie("accessToken", accessToken, options)
+    //     .cookie("refreshToken", refreshToken, options)
+    //     .json(new ApiResponse(200, { user: loggedInUser,accessToken,
+    //     refreshToken  }, "Customer Login Successful"));
 
 })
 
