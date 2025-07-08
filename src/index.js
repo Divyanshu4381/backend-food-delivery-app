@@ -21,10 +21,15 @@ const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
       process.env.BASE_URL,
-    
+      "https://funny-phoenix-042ba4.netlify.app",
+      "http://localhost:3000",
     ];
 
-    if (!origin || allowedOrigins.includes(origin) || /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:\d{4}$/.test(origin)) {
+    if (
+      !origin || 
+      allowedOrigins.includes(origin) || 
+      /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:\d{4}$/.test(origin)
+    ) {
       callback(null, true);
     } else {
       console.log("❌ Blocked by CORS:", origin);
@@ -33,6 +38,7 @@ const corsOptions = {
   },
   credentials: true,
 };
+
 
 const io = new Server(httpServer, {
   cors: corsOptions
