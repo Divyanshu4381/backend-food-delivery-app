@@ -70,6 +70,8 @@ export const registerSuperAdmin = asyncHandler(async (req, res) => {
     // Create new SuperAdmin
     const newAdmin = await SuperAdmin.create({
         phone,
+        name,
+        address,
         email,
         password,
         role: "superAdmin"
