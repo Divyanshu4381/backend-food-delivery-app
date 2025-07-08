@@ -51,11 +51,11 @@ export const generateFrenchiesID = async (cityName) => {
 
 
 export const registerSuperAdmin = asyncHandler(async (req, res) => {
-    const { phone, email, password } = req.body;
+    const { phone,name, email, password ,address} = req.body;
 
     //  Field validation
-    if (!phone || !email || !password) {
-        throw new ApiError(400, "Phone, Email and Password are required");
+    if (!phone ||!name || !email || !password || !address) {
+        throw new ApiError(400, "Phone, Email, Name , Address and Password are required");
     }
 
     // Check if SuperAdmin already exists
