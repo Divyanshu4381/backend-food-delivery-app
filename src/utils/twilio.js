@@ -1,9 +1,10 @@
-// utils/twilio.js
 import twilio from "twilio";
+import dotenv from "dotenv";
+dotenv.config();
 
-const accountSid = process.env.TWILIO_SID;
-const authToken = [AuthToken];
-const twilioPhone = "8957681217"; // e.g. "+1415XXXXXXX"
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-export const twilioClient = twilio(accountSid, authToken);
-export const twilioSender = twilioPhone;
+const twilioClient = twilio(accountSid, authToken);
+console.log(twilioClient)
+export { twilioClient };

@@ -3,6 +3,7 @@ import {Router} from 'express'
 import { forgetPassword, frenchiesCreatedByAdmin, getAllFrenchies, getCurrentUser, getCurrentUserDetails, getSingleFrenchies, logout, manageFrenchiesBySuperAdmin, refereshAccessToken, registerSuperAdmin, updateDetailsFrenchie, updatePassword, userLogin } from '../controllers/user.controller.js';
 import  { authorizeRoles, verifyJWT } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.js';
+import { sendOTP, verifyOTP } from '../controllers/auth.controller.js';
 
 const router=Router();
 
@@ -28,6 +29,11 @@ router.post('/refereshaccesstoken',verifyJWT,refereshAccessToken)
 router.get('/getcurrentuser',verifyJWT,getCurrentUser)
 router.get('/getcurrentuserdetails',verifyJWT,getCurrentUserDetails)
 router.patch('/update-password',verifyJWT,updatePassword)
+
+
+
+router.post("/send-otp", sendOTP);
+router.post("/verify-otp", verifyOTP);
 
 
 

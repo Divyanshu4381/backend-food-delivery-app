@@ -1,59 +1,93 @@
-import { twilioClient, twilioSender } from "../utils/twilio.js";
+import { twilioClient } from "../utils/twilio.js";
+import { User } from "../models/user.model.js";
+import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
-import asyncHandler from "../utils/asyncHandler.js";
-
-// Temporary in-memory store (for production use Redis/DB)
-const otpStore = new Map();
+import jwt from "jsonwebtoken";
 
 // ✅ Send OTP
 export const sendOTP = asyncHandler(async (req, res) => {
   const { phone } = req.body;
+  if (!phone) throw new ApiError(400, "Phone number is required");
 
-  if (!phone) {
-    throw new ApiError(400, "Phone number is required");
+  // Debug logs
+  console.log("Verify SID:", process.env.TWILIO_VERIFY_SERVICE_SID);
+  console.log("Sending to:", phone);
+
+  try {
+    const resp = await twilioClient.verify.v2
+      .services(process.env.TWILIO_VERIFY_SERVICE_SID)
+      .verifications
+      .create({ to: phone, channel: "sms" });
+
+    console.log("Twilio resp:", resp);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "OTP sent successfully"));
+  } catch (err) {
+    console.error("Twilio Error:", err);
+    // err.code और err.message देख कर specific error मेसेज बना सकते हो
+    throw new ApiError(500, `Failed to send OTP: ${err.message}`);
   }
-
-  const otp = Math.floor(100000 + Math.random() * 900000);
-  otpStore.set(phone, { otp, expires: Date.now() + 5 * 60 * 1000 }); // 5 mins expiry
-
-  await twilioClient.messages.create({
-    body: `Your OTP is ${otp}`,
-    from: twilioSender,
-    to: phone,
-  });
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, null, "OTP sent successfully"));
 });
 
 // ✅ Verify OTP
 export const verifyOTP = asyncHandler(async (req, res) => {
   const { phone, otp } = req.body;
 
-  if (!phone || !otp) {
-    throw new ApiError(400, "Phone and OTP are required");
+  if (!phone || !otp) throw new ApiError(400, "Phone and OTP are required");
+
+  const verification = await twilioClient.verify.v2
+    .services(process.env.TWILIO_VERIFY_SERVICE_SID)
+    .verificationChecks.create({ to: phone, code: otp });
+
+  if (verification.status !== "approved") {
+    throw new ApiError(400, "Invalid or expired OTP");
   }
 
-  const stored = otpStore.get(phone);
+  // Register or Login
+  let user = await User.findOne({ phone });
 
-  if (!stored) {
-    throw new ApiError(400, "OTP not found or expired");
+  if (!user) {
+    user = await User.create({
+      phone,
+      role: "customer",
+    });
   }
 
-  if (Date.now() > stored.expires) {
-    otpStore.delete(phone);
-    throw new ApiError(400, "OTP expired");
-  }
+  // Generate JWT tokens
+  const accessToken = jwt.sign(
+    { _id: user._id, phone: user.phone, role: user.role },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: "7d" }
+  );
 
-  if (stored.otp != otp) {
-    throw new ApiError(400, "Invalid OTP");
-  }
+  const refreshToken = jwt.sign(
+    { _id: user._id, phone: user.phone, role: user.role },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: "30d" }
+  );
 
-  otpStore.delete(phone);
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  // Set cookies
+  const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    path: "/",
+  };
 
   return res
     .status(200)
-    .json(new ApiResponse(200, null, "OTP verified successfully"));
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        { user, accessToken, refreshToken },
+        "OTP verified and login success"
+      )
+    );
 });
