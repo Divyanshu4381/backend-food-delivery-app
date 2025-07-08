@@ -10,23 +10,19 @@ export const sendOTP = asyncHandler(async (req, res) => {
   const { phone } = req.body;
   if (!phone) throw new ApiError(400, "Phone number is required");
 
-  // Debug logs
-  console.log("Verify SID:", process.env.TWILIO_VERIFY_SERVICE_SID);
-  console.log("Sending to:", phone);
+  
 
   try {
-    const resp = await twilioClient.verify.v2
+    await twilioClient.verify.v2
       .services(process.env.TWILIO_VERIFY_SERVICE_SID)
       .verifications
       .create({ to: phone, channel: "sms" });
 
-    console.log("Twilio resp:", resp);
     return res
       .status(200)
       .json(new ApiResponse(200, null, "OTP sent successfully"));
   } catch (err) {
     console.error("Twilio Error:", err);
-    // err.code और err.message देख कर specific error मेसेज बना सकते हो
     throw new ApiError(500, `Failed to send OTP: ${err.message}`);
   }
 });
