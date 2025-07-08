@@ -21,8 +21,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
       process.env.BASE_URL,
-      "http://localhost:3000",
-      "http://192.168.0.1:3000",
+    
     ];
 
     if (!origin || allowedOrigins.includes(origin) || /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:\d{4}$/.test(origin)) {
