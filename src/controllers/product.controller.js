@@ -127,6 +127,9 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 });
 
 
+
+
+
 export const getProductById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -171,4 +174,60 @@ export const getProductById = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(new ApiResponse(200, product[0], "Product fetched successfully"));
+});
+
+
+
+// 
+
+
+// export const getProductByCustomer=asyncHandler(async (req, res)=>{
+//         await findOne({})
+// })
+// export const getProductByCustomer=asyncHandler(async (req, res)=>{
+
+// })
+
+
+export const getNearbyProducts = asyncHandler(async (req, res) => {
+  const { lat, lng } = req.query;
+
+  if (!lat || !lng) {
+    throw new ApiError(400, "Latitude and Longitude are required");
+  }
+
+  const searchRadii = [3000, 5000, 7000, 10000]; // in meters (3 km, 5 km, etc.)
+  let finalProducts = [];
+
+  for (let radius of searchRadii) {
+    const nearbyFrenchies = await Frenchies.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: "Point",
+            coordinates: [parseFloat(lng), parseFloat(lat)],
+          },
+          distanceField: "distance",
+          spherical: true,
+          maxDistance: radius
+        }
+      }
+    ]);
+
+    const frenchyIds = nearbyFrenchies.map(f => f._id);
+
+    if (frenchyIds.length > 0) {
+      finalProducts = await Product.find({
+        Frenchies: { $in: frenchyIds } // If you renamed to frenchyId, change here
+      }).populate("category Frenchies");
+    }
+
+    if (finalProducts.length > 0) break; // If products found, stop loop
+  }
+
+  if (finalProducts.length === 0) {
+    return res.status(404).json(new ApiResponse(404, [], "No nearby products found"));
+  }
+
+  res.status(200).json(new ApiResponse(200, finalProducts));
 });

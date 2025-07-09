@@ -1,7 +1,7 @@
 
 import {Router} from 'express'
 import  { authorizeRoles, verifyJWT } from '../middlewares/auth.middleware.js';
-import { createProduct, deleteProduct, getAllProducts, getProductById, updateProduct } from '../controllers/product.controller.js';
+import { createProduct, deleteProduct, getAllProducts, getNearbyProducts, getProductById, updateProduct } from '../controllers/product.controller.js';
 import { upload } from '../middlewares/multer.js';
 const router=Router();
 
@@ -12,5 +12,8 @@ router.get('/getproductbyid/:id',verifyJWT,authorizeRoles("frenchies"),getProduc
 
 router.put('/updateproduct/:id',verifyJWT,authorizeRoles("frenchies"),upload.single('image'),updateProduct)
 router.delete('/deleteproduct/:id',verifyJWT,authorizeRoles("frenchies"),deleteProduct)
+
+
+router.get("/nearby", getNearbyProducts);
 
 export default router;

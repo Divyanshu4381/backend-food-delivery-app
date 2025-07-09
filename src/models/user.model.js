@@ -233,6 +233,8 @@ superAdminSchema.methods.generateRefreshToken = function () {
 }
 
 const User = mongoose.model('User', userSchema);
+
+frenchiesSchema.index({ location: "2dsphere" });
 const Frenchies = mongoose.model('Frenchies', frenchiesSchema);
 
 superAdminSchema.plugin(mongooseAggregatePaginate);
