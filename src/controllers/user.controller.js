@@ -111,7 +111,7 @@ export const userLogin = asyncHandler(async (req, res) => {
         return res.status(200).cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
             .json(new ApiResponse(200, {
-                user: loggedInUser, accessToken,
+                data: loggedInUser, accessToken,
                 refreshToken
             }, "SuperAdmin Login Successful"));
     }
@@ -137,7 +137,7 @@ export const userLogin = asyncHandler(async (req, res) => {
         return res.status(200).cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
             .json(new ApiResponse(200, {
-                user: loggedInUser, accessToken,
+                data: loggedInUser, accessToken,
                 refreshToken
             }, "Frenchies Admin Login Successful"));
     }
