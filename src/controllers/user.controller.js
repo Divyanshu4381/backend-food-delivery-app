@@ -78,7 +78,7 @@ export const registerSuperAdmin = asyncHandler(async (req, res) => {
     });
 
     return res.status(201).json(
-        new ApiResponse(201, { user: newAdmin }, "SuperAdmin registered successfully", true)
+        new ApiResponse(201, { data: newAdmin }, "SuperAdmin registered successfully", true)
     );
 });
 
@@ -221,7 +221,7 @@ export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
         $push: { frenchies: newFrenchies._id }
     });
     return res.status(201).json(
-        new ApiResponse(200, "Frenchies created successfully", { user: newAdmin }, true)
+        new ApiResponse(200, "Frenchies created successfully", { data: newAdmin }, true)
 
     )
 
