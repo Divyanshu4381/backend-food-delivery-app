@@ -35,26 +35,26 @@ const generateAccessAndRefreshTokens = async (userId, role) => {
 
 
 export const generateFrenchiesID = async (cityName) => {
-  const city = cityName.trim().toUpperCase().replace(/\s+/g, "-");
+    const city = cityName.trim().toUpperCase().replace(/\s+/g, "-");
 
-  const counter = await FrenchiesCounter.findOneAndUpdate(
-    { city },
-    { $inc: { count: 1 } },
-    { new: true, upsert: true } // atomic & creates if not exists
-  );
+    const counter = await FrenchiesCounter.findOneAndUpdate(
+        { city },
+        { $inc: { count: 1 } },
+        { new: true, upsert: true } // atomic & creates if not exists
+    );
 
-  const nextNumber = counter.count.toString().padStart(5, '0'); // Eg: 001
-  const frenchiesID = `${city}-${nextNumber}`;
+    const nextNumber = counter.count.toString().padStart(5, '0'); // Eg: 001
+    const frenchiesID = `${city}-${nextNumber}`;
 
-  return frenchiesID;
+    return frenchiesID;
 };
 
 
 export const registerSuperAdmin = asyncHandler(async (req, res) => {
-    const { phone,name, email, password ,address} = req.body;
+    const { phone, name, email, password, address } = req.body;
 
     //  Field validation
-    if (!phone ||!name || !email || !password || !address) {
+    if (!phone || !name || !email || !password || !address) {
         throw new ApiError(400, "Phone, Email, Name , Address and Password are required");
     }
 
@@ -110,16 +110,18 @@ export const userLogin = asyncHandler(async (req, res) => {
         }
         return res.status(200).cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
-            .json(new ApiResponse(200, { user: loggedInUser ,accessToken,
-        refreshToken }, "SuperAdmin Login Successful"));
+            .json(new ApiResponse(200, {
+                user: loggedInUser, accessToken,
+                refreshToken
+            }, "SuperAdmin Login Successful"));
     }
 
     // Frenchies Admin Login
 
     user = await Frenchies.findOne({ phone });
     if (user) {
-        if(!user.isActivated){
-            throw new ApiError(400,"Your account has been deactivated. Please contact the Super Admin.")
+        if (!user.isActivated) {
+            throw new ApiError(400, "Your account has been deactivated. Please contact the Super Admin.")
         }
         if (!password) throw new ApiError(400, "Password is required for Admin");
         const isPasswordValid = await user.isPasswordCorrect(password);
@@ -134,8 +136,10 @@ export const userLogin = asyncHandler(async (req, res) => {
         }
         return res.status(200).cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
-            .json(new ApiResponse(200, { user: loggedInUser,accessToken,
-        refreshToken }, "Frenchies Admin Login Successful"));
+            .json(new ApiResponse(200, {
+                user: loggedInUser, accessToken,
+                refreshToken
+            }, "Frenchies Admin Login Successful"));
     }
 
     // Customer Login
@@ -182,7 +186,7 @@ export const userLogin = asyncHandler(async (req, res) => {
 
 
 export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
-    const { name,ownerName, phone, email, address, city, state, country } = req.body;
+    const { name, ownerName, phone, email, address, city, state, country } = req.body;
     if (!phone || !email || !address) {
         throw new ApiError(400, "Email and Password is missing")
     }
@@ -191,6 +195,9 @@ export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
         throw new ApiError(400, "user already exit")
     }
     const frenchiesID = await generateFrenchiesID(city);
+    let location = {
+        coordinates: ["00.0000", "00.0000"]
+    };
 
     const newAdmin = await Frenchies.create({
         frenchiesID: frenchiesID,
@@ -202,6 +209,8 @@ export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
         city,
         state,
         country,
+        location,
+
         password: phone,
 
         role: "frenchies"
@@ -212,7 +221,7 @@ export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
         $push: { frenchies: newFrenchies._id }
     });
     return res.status(201).json(
-        new ApiResponse(200,  "Frenchies created successfully",{ user: newAdmin }, true)
+        new ApiResponse(200, "Frenchies created successfully", { user: newAdmin }, true)
 
     )
 
@@ -250,7 +259,7 @@ export const logout = asyncHandler(async (req, res) => {
     return res.status(200)
         .clearCookie("accessToken", options)
         .clearCookie("refreshToken", options)
-        .json(new ApiResponse(200,{},  "User Logout Successfully"))
+        .json(new ApiResponse(200, {}, "User Logout Successfully"))
 
 })
 
@@ -304,34 +313,34 @@ export const refereshAccessToken = asyncHandler(async (req, res) => {
 })
 
 // CRUD operation set for frenchie
-export const updatePassword=asyncHandler(async(req,res)=>{
-    const {oldPassword,newPassword,confirmPassword}=req.body;
-    const userId=req.user?._id;
-    const userRole=req.user?.role;
-    if(!oldPassword|| !newPassword || !confirmPassword){
-        throw new ApiError(400,"Please provide old password, new password, and confirm password.")
+export const updatePassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.user?._id;
+    const userRole = req.user?.role;
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        throw new ApiError(400, "Please provide old password, new password, and confirm password.")
     }
     let user;
-    if(userRole==="superAdmin"){
-        user=await SuperAdmin.findById(userId)
-    }else if(userRole==="frenchies"){
-        user=await Frenchies.findById(userId)
-    }else{
-        throw new ApiError(404,"unauthoried user ")
+    if (userRole === "superAdmin") {
+        user = await SuperAdmin.findById(userId)
+    } else if (userRole === "frenchies") {
+        user = await Frenchies.findById(userId)
+    } else {
+        throw new ApiError(404, "unauthoried user ")
     }
     const isPasswordValid = await user.isPasswordCorrect(oldPassword);
-    if(!isPasswordValid){
-        
-        throw new ApiError(400,"Sorry, the old password you entered doesn't match our records.")
+    if (!isPasswordValid) {
+
+        throw new ApiError(400, "Sorry, the old password you entered doesn't match our records.")
     }
-    if(newPassword!==confirmPassword){
-        throw new ApiError(400,"new Password or confirm password are not match")
+    if (newPassword !== confirmPassword) {
+        throw new ApiError(400, "new Password or confirm password are not match")
     }
     user.password = newPassword;
     await user.save({ validateBeforeSave: false });
 
     res.status(200).json(
-        new ApiResponse(200,  {user},"Password updated successfully.",)
+        new ApiResponse(200, { user }, "Password updated successfully.",)
     );
 
 
@@ -340,50 +349,50 @@ export const updatePassword=asyncHandler(async(req,res)=>{
 
 
 export const updateDetailsFrenchie = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const {
-    frenchieName,
-    ownerName,
-    email,
-    contact_no,
-    address,
-    latitude,
-    longitude,
-  } = req.body;
+    const userId = req.user._id;
+    const {
+        frenchieName,
+        ownerName,
+        email,
+        contact_no,
+        address,
+        latitude,
+        longitude,
+    } = req.body;
 
-  const user = await Frenchies.findById(userId);
-  if (!user) {
-    throw new ApiError(404, "Frenchies user not found with the provided ID.");
-  }
-
-  // Optional: Image Upload
-  const imageLocalPath = req.file?.path;
-  if (imageLocalPath) {
-    const image = await uploadOnCloudinary(imageLocalPath);
-    if (image?.url) {
-      user.profilePhoto = image.url;
+    const user = await Frenchies.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "Frenchies user not found with the provided ID.");
     }
-  }
 
-  // Optional: Fields to update (only if provided)
-  if (frenchieName) user.frenchieName = frenchieName;
-  if (ownerName) user.ownerName = ownerName;
-  if (email) user.email = email;
-  if (contact_no) user.contact_no = contact_no;
-  if (address) user.address = address;
+    // Optional: Image Upload
+    const imageLocalPath = req.file?.path;
+    if (imageLocalPath) {
+        const image = await uploadOnCloudinary(imageLocalPath);
+        if (image?.url) {
+            user.profilePhoto = image.url;
+        }
+    }
 
-  if (latitude && longitude) {
-    user.location = {
-      type: "Point",
-      coordinates: [parseFloat(longitude), parseFloat(latitude)],
-    };
-  }
+    // Optional: Fields to update (only if provided)
+    if (frenchieName) user.frenchieName = frenchieName;
+    if (ownerName) user.ownerName = ownerName;
+    if (email) user.email = email;
+    if (contact_no) user.contact_no = contact_no;
+    if (address) user.address = address;
 
-  await user.save();
+    if (latitude && longitude) {
+        user.location = {
+            type: "Point",
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+        };
+    }
 
-  return res.status(200).json(
-    new ApiResponse(200, { user }, "Profile updated successfully.")
-  );
+    await user.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, { user }, "Profile updated successfully.")
+    );
 });
 
 
@@ -413,64 +422,64 @@ export const forgetPassword = asyncHandler(async (req, res) => {
 // CRUD opeation set for SuperAdmin
 
 export const getAllFrenchies = asyncHandler(async (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
 
-  const superAdminId = req.user?._id;
+    const superAdminId = req.user?._id;
 
-  if (!superAdminId) {
-    return res.status(400).json({
-      success: false,
-      message: "SuperAdmin ID missing from request."
-    });
-  }
-
-  const aggregateQuery = SuperAdmin.aggregate([
-    {
-      $match: {
-        _id: new mongoose.Types.ObjectId(String(superAdminId))
-      }
-    },
-    {
-      $lookup: {
-        from: "frenchies",
-        localField: "frenchies",
-        foreignField: "_id",
-        as: "frenchiesList"
-      }
-    },
-    {
-      $unwind: "$frenchiesList"
-    },
-    {
-      $replaceRoot: { newRoot: "$frenchiesList" }
-    },
-    {
-      $sort: { createdAt: -1 }
+    if (!superAdminId) {
+        return res.status(400).json({
+            success: false,
+            message: "SuperAdmin ID missing from request."
+        });
     }
-  ]);
 
-  // Paginate
-  const options = {
-    page,
-    limit
-  };
+    const aggregateQuery = SuperAdmin.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(String(superAdminId))
+            }
+        },
+        {
+            $lookup: {
+                from: "frenchies",
+                localField: "frenchies",
+                foreignField: "_id",
+                as: "frenchiesList"
+            }
+        },
+        {
+            $unwind: "$frenchiesList"
+        },
+        {
+            $replaceRoot: { newRoot: "$frenchiesList" }
+        },
+        {
+            $sort: { createdAt: -1 }
+        }
+    ]);
 
-  const result = await SuperAdmin.aggregatePaginate(aggregateQuery, options);
+    // Paginate
+    const options = {
+        page,
+        limit
+    };
 
-  const totalDocs = result.docs.length;
-  const totalApproved = result.docs.filter(f => f.status === "Approved").length;
-  const totalPending = result.docs.filter(f => f.status === "Pending").length;
+    const result = await SuperAdmin.aggregatePaginate(aggregateQuery, options);
 
-  return res.status(200).json({
-    success: true,
-    totalDocs: result.totalDocs,
-    totalApproved,
-    totalPending,
-    totalPages: result.totalPages,
-    currentPage: result.page,
-    data: result.docs
-  });
+    const totalDocs = result.docs.length;
+    const totalApproved = result.docs.filter(f => f.status === "Approved").length;
+    const totalPending = result.docs.filter(f => f.status === "Pending").length;
+
+    return res.status(200).json({
+        success: true,
+        totalDocs: result.totalDocs,
+        totalApproved,
+        totalPending,
+        totalPages: result.totalPages,
+        currentPage: result.page,
+        data: result.docs
+    });
 });
 
 // get frenchies by id
@@ -484,51 +493,51 @@ export const getSingleFrenchies = asyncHandler(async (req, res) => {
 });
 
 export const updateFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
-  const superAdminId = req.user._id;
+    const superAdminId = req.user._id;
 
-  if (req.user.role !== "superAdmin") {
-    throw new ApiError(403, "Access denied. Only SuperAdmin can perform this action.");
-  }
-
-  const { frenchiesId } = req.params; // /update-frenchies/:frenchiesId
-  const updateData = req.body;
-
-  const frenchies = await Frenchies.findById(frenchiesId);
-  if (!frenchies) {
-    throw new ApiError(404, "Frenchies not found");
-  }
-
-  // Update only allowed fields
-  const allowedFields = [
-    "email",
-    "frenchieName",
-    "ownerName",
-    "city",
-    "state",
-    "country",
-    "address",
-    "contact_no",
-    "status",
-    "isActivated",
-    "profilePhoto"
-  ];
-
-  allowedFields.forEach((field) => {
-    if (updateData[field] !== undefined) {
-      frenchies[field] = updateData[field];
+    if (req.user.role !== "superAdmin") {
+        throw new ApiError(403, "Access denied. Only SuperAdmin can perform this action.");
     }
-  });
 
-  await frenchies.save();
+    const { frenchiesId } = req.params; // /update-frenchies/:frenchiesId
+    const updateData = req.body;
 
-  return res.status(200).json(
-    new ApiResponse(200, frenchies, "Frenchies updated successfully")
-  );
+    const frenchies = await Frenchies.findById(frenchiesId);
+    if (!frenchies) {
+        throw new ApiError(404, "Frenchies not found");
+    }
+
+    // Update only allowed fields
+    const allowedFields = [
+        "email",
+        "frenchieName",
+        "ownerName",
+        "city",
+        "state",
+        "country",
+        "address",
+        "contact_no",
+        "status",
+        "isActivated",
+        "profilePhoto"
+    ];
+
+    allowedFields.forEach((field) => {
+        if (updateData[field] !== undefined) {
+            frenchies[field] = updateData[field];
+        }
+    });
+
+    await frenchies.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, frenchies, "Frenchies updated successfully")
+    );
 });
 
 export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
     const { action, frenchiesID, updateData, status } = req.body;
-    
+
     if (!action || !frenchiesID) {
         throw new ApiError(400, "Action and FrenchiesID are required.");
 
@@ -615,7 +624,7 @@ export const getCurrentUserDetails = asyncHandler(async (req, res) => {
         case "superAdmin":
             user = await SuperAdmin.findById(userId).select("-password");
             break;
-        
+
         default:
             throw new ApiError(400, "Invalid user role");
     }
