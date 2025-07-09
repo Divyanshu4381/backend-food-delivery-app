@@ -468,8 +468,8 @@ export const getAllFrenchies = asyncHandler(async (req, res) => {
     const result = await SuperAdmin.aggregatePaginate(aggregateQuery, options);
 
     const totalDocs = result.docs.length;
-    const totalApproved = result.docs.filter(f => f.status === "Approved").length;
-    const totalPending = result.docs.filter(f => f.status === "Pending").length;
+    const totalApproved = result.docs.filter(f => f.isActivated === true).length;
+    const totalPending = result.docs.filter(f => f.isActivated === false).length;
 
     return res.status(200).json({
         success: true,
