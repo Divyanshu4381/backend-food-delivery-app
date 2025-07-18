@@ -1,13 +1,12 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
-import { Frenchies, User } from "../models/user.model.js";
+import { Frenchies, User, Delivery_Boy, SuperAdmin } from "../models/user.model.js";
 import ApiResponse from "../utils/ApiResponse.js";
-import { SuperAdmin } from "../models/user.model.js";
 import jwt from 'jsonwebtoken'
 import mongoose from "mongoose";
 import { uploadOnCloudinary } from "../config/cloudinary.js";
 import FrenchiesCounter from "../models/frenchiesCounter.model.js";
-
+import { Counter } from "../models/counter.model.js";
 const generateAccessAndRefreshTokens = async (userId, role) => {
 
     try {
@@ -50,6 +49,7 @@ export const generateFrenchiesID = async (cityName) => {
 };
 
 
+// CRUD opeation  for SuperAdmin
 export const registerSuperAdmin = asyncHandler(async (req, res) => {
     const { phone, name, email, password, address } = req.body;
 
@@ -81,6 +81,50 @@ export const registerSuperAdmin = asyncHandler(async (req, res) => {
         new ApiResponse(201, { data: newAdmin }, "SuperAdmin registered successfully", true)
     );
 });
+
+export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
+    const { name, ownerName, phone, email, address, city, state, country } = req.body;
+    if (!phone || !email || !address) {
+        throw new ApiError(400, "Email and Password is missing")
+    }
+    const user = await Frenchies.findOne({ phone })
+    if (user) {
+        throw new ApiError(400, "user already exit")
+    }
+    const frenchiesID = await generateFrenchiesID(city);
+    let location = {
+        coordinates: ["00.0000", "00.0000"]
+    };
+
+    const newAdmin = await Frenchies.create({
+        frenchiesID: frenchiesID,
+        frenchieName: name,
+        ownerName,
+        phone,
+        email,
+        address,
+        city,
+        state,
+        country,
+        location,
+
+        password: phone,
+
+        role: "frenchies"
+    })
+    const superAdminId = req.user?._id
+    const newFrenchies = await Frenchies.findOne({ frenchiesID });
+    await SuperAdmin.findByIdAndUpdate(superAdminId, {
+        $push: { frenchies: newFrenchies._id }
+    });
+    return res.status(201).json(
+        new ApiResponse(200, "Frenchies created successfully", { data: newAdmin }, true)
+
+    )
+
+
+})
+
 
 
 export const userLogin = asyncHandler(async (req, res) => {
@@ -183,134 +227,70 @@ export const userLogin = asyncHandler(async (req, res) => {
 
 })
 
+export const getAllFrenchies = asyncHandler(async (req, res) => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
 
+    const superAdminId = req.user?._id;
 
-export const frenchiesCreatedByAdmin = asyncHandler(async (req, res) => {
-    const { name, ownerName, phone, email, address, city, state, country } = req.body;
-    if (!phone || !email || !address) {
-        throw new ApiError(400, "Email and Password is missing")
+    if (!superAdminId) {
+        return res.status(400).json({
+            success: false,
+            message: "SuperAdmin ID missing from request."
+        });
     }
-    const user = await Frenchies.findOne({ phone })
-    if (user) {
-        throw new ApiError(400, "user already exit")
-    }
-    const frenchiesID = await generateFrenchiesID(city);
-    let location = {
-        coordinates: ["00.0000", "00.0000"]
+
+    const aggregateQuery = SuperAdmin.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(String(superAdminId))
+            }
+        },
+        {
+            $lookup: {
+                from: "frenchies",
+                localField: "frenchies",
+                foreignField: "_id",
+                as: "frenchiesList"
+            }
+        },
+        {
+            $unwind: "$frenchiesList"
+        },
+        {
+            $replaceRoot: { newRoot: "$frenchiesList" }
+        },
+        {
+            $sort: { createdAt: -1 }
+        }
+    ]);
+
+    // Paginate
+    const options = {
+        page,
+        limit
     };
 
-    const newAdmin = await Frenchies.create({
-        frenchiesID: frenchiesID,
-        frenchieName: name,
-        ownerName,
-        phone,
-        email,
-        address,
-        city,
-        state,
-        country,
-        location,
+    const result = await SuperAdmin.aggregatePaginate(aggregateQuery, options);
 
-        password: phone,
+    const totalDocs = result.docs.length;
+    const totalApproved = result.docs.filter(f => f.isActivated === true).length;
+    const totalPending = result.docs.filter(f => f.isActivated === false).length;
 
-        role: "frenchies"
-    })
-    const superAdminId = req.user?._id
-    const newFrenchies = await Frenchies.findOne({ frenchiesID });
-    await SuperAdmin.findByIdAndUpdate(superAdminId, {
-        $push: { frenchies: newFrenchies._id }
+    return res.status(200).json({
+        success: true,
+        totalDocs: result.totalDocs,
+        totalApproved,
+        totalPending,
+        totalPages: result.totalPages,
+        currentPage: result.page,
+        data: result.docs
     });
-    return res.status(201).json(
-        new ApiResponse(200, "Frenchies created successfully", { data: newAdmin }, true)
-
-    )
-
-
-})
-
-
-export const logout = asyncHandler(async (req, res) => {
-    const userId = req.user._id
-    const userRole = req.user.role
-    let userModel;
-    if (userRole === "superAdmin") {
-        userModel = SuperAdmin;
-    } else if (userRole === "frenchies") {
-        userModel = Frenchies;
-    } else if (userRole === "customer") {
-        userModel = User;
-    } else {
-        throw new ApiError(400, "Invalid user role");
-    }
-
-    const user = await userModel.findById(userId)
-    if (!user) {
-        throw new ApiError(404, "user not found")
-    }
-    user.refreshToken = undefined;
-    await user.save({ validateBeforeSave: false });
-
-    const options = {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        path: '/'
-    }
-    return res.status(200)
-        .clearCookie("accessToken", options)
-        .clearCookie("refreshToken", options)
-        .json(new ApiResponse(200, {}, "User Logout Successfully"))
-
-})
+});
 
 
 
-export const refereshAccessToken = asyncHandler(async (req, res) => {
-    const incomingrefreshToken = req.cookies?.refreshToken || req.body?.refreshToken
-    if (!incomingrefreshToken) {
-        throw new ApiError(401, "Unauthorized request")
 
-    }
-    try {
-        const decodedToken = jwt.verify(incomingrefreshToken, process.env.REFRESH_TOKEN_SECRET)
-        const { _id, role } = decodedToken;
-        let user;
-        if (role === "superAdmin") {
-            user = await SuperAdmin.findById(_id)
-        } else if (role === "frenchies") {
-            user = await Frenchies.findById(_id)
-        } else if (role === "customer") {
-            user = await User.findById(_id);
-        } else {
-            throw new ApiError(401, "Invalid role in token");
-        }
-        if (!user) {
-            throw new ApiError(401, "User not found with this token");
-        }
-        if (incomingrefreshToken !== user?.refreshToken) {
-            throw new ApiError(401, "Invalid refresh token");
-        }
-        const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id, role);
-        const options = {
-            httpOnly: true,
-            secure: true,
-            sameSite: "None",
-            path: '/'
-        }
-        return res.status(200)
-            .cookie("accessToken", accessToken, options)
-            .cookie("refreshToken", newRefreshToken, options)
-            .json(
-                new ApiResponse(200,
-                    { accessToken, refreshToken: newRefreshToken },
-                    "Access token refreshed successfully")
-            )
-
-
-    } catch (error) {
-        throw new ApiError(401, error?.message || "Invalid refresh Token")
-    }
-})
 
 // CRUD operation set for frenchie
 export const updatePassword = asyncHandler(async (req, res) => {
@@ -419,68 +399,96 @@ export const forgetPassword = asyncHandler(async (req, res) => {
     )
 })
 
-// CRUD opeation set for SuperAdmin
+export const createDeliveryBoyForFrenchie = asyncHandler(async (req, res) => {
+    const frenchiesID = req.user._id
+    const { name, email, phone, aadharNumber, address, city, state, country } = req.body;
 
-export const getAllFrenchies = asyncHandler(async (req, res) => {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const requiredFields = { name, email, phone, aadharNumber, address, city, state, country };
 
-    const superAdminId = req.user?._id;
+    for (const [key, value] of Object.entries(requiredFields)) {
+        if (!value) {
+            throw new ApiError(400, `${value} is required`);
+        }
+    }
+    const existingDeliveryBoy = await Delivery_Boy.findOne({
+        $or: [{ email }, { phone }]
+    });
+    if (existingDeliveryBoy) {
+        throw new ApiError(409, "Delivery boy with this email or phone already exists");
+    }
+    const frenchie = await Frenchies.findById(frenchiesID);
+    if (!frenchie) {
+        throw new ApiError(404, "Frenchie not found");
+    }
+    const frenchieName = frenchie.frenchieName.replace(/\s+/g, '');
+    const currentYear = new Date().getFullYear();
+    const counterKey = `${frenchieName}_${currentYear}`;
 
-    if (!superAdminId) {
-        return res.status(400).json({
-            success: false,
-            message: "SuperAdmin ID missing from request."
-        });
+    // ✅ Atomic Counter Increment
+    const counter = await Counter.findOneAndUpdate(
+        { _id: counterKey },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+    );
+    const paddedCount = String(counter.seq).padStart(4, '0');
+    const deliveryBoyID = `${frenchieName}_${currentYear}${paddedCount}`;
+   
+    const password=phone
+    const newDeliveryBoy = await Delivery_Boy.create({
+        deliveryBoyID,
+        frenchiesID,
+        name,
+        email,
+        phone,
+        aadharNumber,
+        address,
+        city,
+        state,
+        country,
+        password
+    });
+
+    const result = newDeliveryBoy.toObject();
+    delete result.password;
+
+    res.status(201).json(
+        new ApiResponse(201, result, `Delivery Boy created successfully. Temporary password: ${password}`)
+    );
+})
+
+export const manageDeliveryBoyByFrenchie = asyncHandler(async (req, res) => {
+    const { action, deliveryBoyID} = req.body;
+
+    if (!action || !deliveryBoyID) {
+        throw new ApiError(400, "Action and FrenchiesID are required.");
+
+    }
+    const deliveryBoy = await Delivery_Boy.findOne({ deliveryBoyID })
+    if (!deliveryBoy) {
+        throw new ApiError(404, "Delivery Boy not found with this ID.");
+
+    }
+    switch (action) {
+        
+        case "toggleStatus":
+            deliveryBoy.isActivated = !deliveryBoy.isActivated;
+            await deliveryBoy.save();
+            return res.status(200).json(
+                200, deliveryBoy, `Frenchies Status ${deliveryBoy.isActivated ? "Activated" : "Deactivated"}`
+            )
+        case "delete":
+            await Frenchies.deleteOne({ _id: deliveryBoy._id });
+            return res.status(200).json(
+                new ApiResponse(200, {}, "Frenchies deleted successfully.")
+            );
+        
+        default:
+            throw new ApiError(400, "Invalid action type.");
     }
 
-    const aggregateQuery = SuperAdmin.aggregate([
-        {
-            $match: {
-                _id: new mongoose.Types.ObjectId(String(superAdminId))
-            }
-        },
-        {
-            $lookup: {
-                from: "frenchies",
-                localField: "frenchies",
-                foreignField: "_id",
-                as: "frenchiesList"
-            }
-        },
-        {
-            $unwind: "$frenchiesList"
-        },
-        {
-            $replaceRoot: { newRoot: "$frenchiesList" }
-        },
-        {
-            $sort: { createdAt: -1 }
-        }
-    ]);
 
-    // Paginate
-    const options = {
-        page,
-        limit
-    };
 
-    const result = await SuperAdmin.aggregatePaginate(aggregateQuery, options);
-
-    const totalDocs = result.docs.length;
-    const totalApproved = result.docs.filter(f => f.isActivated === true).length;
-    const totalPending = result.docs.filter(f => f.isActivated === false).length;
-
-    return res.status(200).json({
-        success: true,
-        totalDocs: result.totalDocs,
-        totalApproved,
-        totalPending,
-        totalPages: result.totalPages,
-        currentPage: result.page,
-        data: result.docs
-    });
-});
+})
 
 // get frenchies by id
 export const getSingleFrenchies = asyncHandler(async (req, res) => {
@@ -596,7 +604,7 @@ export const manageFrenchiesBySuperAdmin = asyncHandler(async (req, res) => {
 })
 
 
-// get user
+// Common Controllers
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
 
@@ -624,6 +632,9 @@ export const getCurrentUserDetails = asyncHandler(async (req, res) => {
         case "superAdmin":
             user = await SuperAdmin.findById(userId).select("-password");
             break;
+        case "deliveryBoy":
+            user = await Delivery_Boy.findById(userId).select("-password");
+            break;
 
         default:
             throw new ApiError(400, "Invalid user role");
@@ -637,6 +648,97 @@ export const getCurrentUserDetails = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, user, "User details fetched successfully"));
 });
+
+
+
+export const logout = asyncHandler(async (req, res) => {
+    const userId = req.user._id
+    const userRole = req.user.role
+    let userModel;
+    if (userRole === "superAdmin") {
+        userModel = SuperAdmin;
+    } else if (userRole === "frenchies") {
+        userModel = Frenchies;
+    } else if (userRole === "customer") {
+        userModel = User;
+    } else if (userRole === "deliveryBoy") {
+        userModel = Delivery_Boy;
+    } else {
+        throw new ApiError(400, "Invalid user role");
+    }
+
+    const user = await userModel.findById(userId)
+    if (!user) {
+        throw new ApiError(404, "user not found")
+    }
+    user.refreshToken = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        path: '/'
+    }
+    return res.status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "User Logout Successfully"))
+
+})
+
+
+
+export const refereshAccessToken = asyncHandler(async (req, res) => {
+    const incomingrefreshToken = req.cookies?.refreshToken || req.body?.refreshToken
+    if (!incomingrefreshToken) {
+        throw new ApiError(401, "Unauthorized request")
+
+    }
+    try {
+        const decodedToken = jwt.verify(incomingrefreshToken, process.env.REFRESH_TOKEN_SECRET)
+        const { _id, role } = decodedToken;
+        let user;
+        if (role === "superAdmin") {
+            user = await SuperAdmin.findById(_id)
+        } else if (role === "frenchies") {
+            user = await Frenchies.findById(_id)
+        } else if (role === "customer") {
+            user = await User.findById(_id);
+        } else if (role === "Delivery_Boy") {
+            user = await Delivery_Boy.findById(_id);
+        } else {
+            throw new ApiError(401, "Invalid role in token");
+        }
+        if (!user) {
+            throw new ApiError(401, "User not found with this token");
+        }
+        if (incomingrefreshToken !== user?.refreshToken) {
+            throw new ApiError(401, "Invalid refresh token");
+        }
+        const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id, role);
+        const options = {
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+            path: '/'
+        }
+        return res.status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new ApiResponse(200,
+                    { accessToken, refreshToken: newRefreshToken },
+                    "Access token refreshed successfully")
+            )
+
+
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid refresh Token")
+    }
+})
+
+
 
 
 

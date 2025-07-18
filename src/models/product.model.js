@@ -13,20 +13,20 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: [true, "Product image URL is required"]
     },
-    discount:{
-        type:String
+    discount: {
+        type: String
     },
-    discountCoupon:{
-        type:String
+    discountCoupon: {
+        type: String
     },
     price: {
         type: Number,
         required: [true, "Product price is required"]
     },
-    
+
     stock: {
         type: String,
-        enum:["In Stock","Out Stock"],
+        enum: ["In Stock", "Out Stock"],
         default: "In Stock"
     },
     category: {
@@ -35,11 +35,15 @@ const productSchema = new mongoose.Schema({
     },
     Frenchies: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Frenchies", 
+        ref: "Frenchies",
         required: true
     },
-    
- 
+    toppings: {
+        type: [String],
+        default: [],
+    },
+
+
 }, { timestamps: true });
 
 export const Product = mongoose.model('Product', productSchema);

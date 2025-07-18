@@ -1,6 +1,6 @@
 
 import {Router} from 'express'
-import { forgetPassword, frenchiesCreatedByAdmin, getAllFrenchies, getCurrentUser, getCurrentUserDetails, getSingleFrenchies, logout, manageFrenchiesBySuperAdmin, refereshAccessToken, registerSuperAdmin, updateDetailsFrenchie, updatePassword, userLogin } from '../controllers/user.controller.js';
+import { createDeliveryBoyForFrenchie, forgetPassword, frenchiesCreatedByAdmin, getAllFrenchies, getCurrentUser, getCurrentUserDetails, getSingleFrenchies, logout, manageFrenchiesBySuperAdmin, refereshAccessToken, registerSuperAdmin, updateDetailsFrenchie, updatePassword, userLogin } from '../controllers/user.controller.js';
 import  { authorizeRoles, verifyJWT } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.js';
 import { sendOTP, verifyOTP } from '../controllers/auth.controller.js';
@@ -18,6 +18,8 @@ router.post('/logout',verifyJWT,logout)
 // for frenchies handling
 router.put('/frenchies/update-details-frenchie',verifyJWT,authorizeRoles("frenchies"),upload.single('image'),updateDetailsFrenchie)
 router.patch('/frenchies/forget-password',forgetPassword)
+router.post('/frenchies/create-delivery-boy',verifyJWT,authorizeRoles("frenchies"),createDeliveryBoyForFrenchie)
+
 
 // for super admin
 router.get('/super-admin/getallfrenchies',verifyJWT,authorizeRoles("superAdmin"),getAllFrenchies)

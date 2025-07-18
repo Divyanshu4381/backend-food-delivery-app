@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["customer", "frenchies", "superAdmin"],
+        enum: ["customer", "frenchies", "deliveryBoy", "superAdmin"],
         default: "customer"
     },
     refreshToken: {
@@ -28,9 +28,9 @@ const frenchiesSchema = new mongoose.Schema({
         unique: true,
         index: true
     },
-    ownerName:{
-        type:String,
-        required:[true,"Owner Name is required"]
+    ownerName: {
+        type: String,
+        required: [true, "Owner Name is required"]
     },
     frenchieName: {
         type: String,
@@ -38,8 +38,8 @@ const frenchiesSchema = new mongoose.Schema({
         // unique: true,
         index: true
     },
-    profilePhoto:{
-        type:String
+    profilePhoto: {
+        type: String
     },
     email: {
         type: String,
@@ -48,8 +48,8 @@ const frenchiesSchema = new mongoose.Schema({
         lowercase: true,
         trim: true
     },
-    contact_no:{
-        type:String
+    contact_no: {
+        type: String
     },
     password: {
         type: String,
@@ -64,7 +64,7 @@ const frenchiesSchema = new mongoose.Schema({
 
     },
     country: {
-        type: String, 
+        type: String,
 
     },
     address: {
@@ -98,7 +98,11 @@ const frenchiesSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     }],
-    orders:[{
+    Delivery_Boy: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Delivery_Boy"
+    }],
+    orders: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Order"
     }],
@@ -120,44 +124,6 @@ const frenchiesSchema = new mongoose.Schema({
 
 
 }, { timestamps: true })
-
-
-const superAdminSchema = new mongoose.Schema({
-    ...userSchema.obj,
-    role: {
-        type: String,
-        enum: ["superAdmin"],
-        default: "superAdmin"
-    },
-    name:{
-        type:String,
-        required:true
-    },
-    address:{
-        type:String,
-        required:true
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true
-
-    },
-    password: {
-        type: String,
-        required: true
-    },
-    frenchies: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Frenchies"
-    }],
-    refreshToken: {
-        type: String,
-    }
-
-},{timestamps:true})
 
 
 frenchiesSchema.pre('save', async function (next) {
@@ -193,6 +159,188 @@ frenchiesSchema.methods.generateRefreshToken = function () {
         { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
     )
 }
+
+
+
+
+const deliveryBoySchema = new mongoose.Schema({
+  deliveryBoyID: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true
+  },
+
+  frenchiesID: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Frenchies",
+    index: true
+  },
+
+  name: {
+    type: String,
+    required: [true, "Delivery Boy Name is required"],
+    index: true
+  },
+
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+
+  phone: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [/^[6-9]\d{9}$/, "Enter valid 10-digit mobile number"],
+    index: true
+  },
+
+  alternameContact_no: {
+    type: String,
+  },
+
+  profilePhoto: {
+    type: String,
+  },
+
+  password: {
+    type: String,
+    required: true,
+  },
+
+  passwordChangedAt: Date,
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
+
+  otp: String,
+  otpExpiry: Date,
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+
+  address: String,
+  city: String,
+  state: String,
+  country: String,
+
+
+  isAvailable: {
+    type: Boolean,
+    default: true
+  },
+
+  role: {
+    type: String,
+    enum: ["deliveryBoy"],
+    default: "deliveryBoy"
+  },
+
+  refreshToken: String,
+
+  orders: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Order"
+  }],
+  totalOrder: {
+    type: Number,
+    default: 0
+  },
+  completeOrder: {
+    type: Number,
+    default: 0
+  },
+  pendingOrder: {
+    type: Number,
+    default: 0
+  },
+
+  ratings: {
+    type: Number,
+    default: 0
+  },
+  totalRatings: {
+    type: Number,
+    default: 0
+  },
+
+  aadharNumber: {
+    type: String,
+    required: true
+  },
+
+  vehicleDetails: {
+    type: Object, // Example: { number: 'DL01AB1234', type: 'bike' }
+    default: {}
+  },
+
+  documentsUploaded: {
+    type: Boolean,
+    default: false
+  },
+
+
+  isActivated: {
+    type: Boolean,
+    default: true
+  }
+
+}, { timestamps: true });
+
+
+// 🔐 Hash password before save
+deliveryBoySchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
+
+
+
+
+
+const superAdminSchema = new mongoose.Schema({
+    ...userSchema.obj,
+    role: {
+        type: String,
+        enum: ["superAdmin"],
+        default: "superAdmin"
+    },
+    name: {
+        type: String,
+        required: true
+    },
+    address: {
+        type: String,
+        required: true
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true
+
+    },
+    password: {
+        type: String,
+        required: true
+    },
+    frenchies: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Frenchies"
+    }],
+    refreshToken: {
+        type: String,
+    }
+
+}, { timestamps: true })
+
+
 
 
 
@@ -236,6 +384,7 @@ const User = mongoose.model('User', userSchema);
 
 frenchiesSchema.index({ location: "2dsphere" });
 const Frenchies = mongoose.model('Frenchies', frenchiesSchema);
+const Delivery_Boy = mongoose.model('Delivery_Boy', deliveryBoySchema);
 
 superAdminSchema.plugin(mongooseAggregatePaginate);
 const SuperAdmin = mongoose.model('SuperAdmin', superAdminSchema)
@@ -244,4 +393,4 @@ const SuperAdmin = mongoose.model('SuperAdmin', superAdminSchema)
 
 
 
-export { User, Frenchies, SuperAdmin };
+export { User, Frenchies,Delivery_Boy, SuperAdmin };

@@ -5,6 +5,8 @@ import { Product } from "../models/product.model.js";
 import { uploadOnCloudinary } from "../config/cloudinary.js";
 import mongoose from "mongoose";
 import { Frenchies } from "../models/user.model.js";
+import fuzzysort from 'fuzzysort';
+
 export const createProduct=asyncHandler(async(req,res)=>{
     const {
         name,
@@ -12,7 +14,8 @@ export const createProduct=asyncHandler(async(req,res)=>{
         price, 
         stock,
         category,
-        discountCoupon  
+        discountCoupon,
+        toppings 
     } = req.body;
     if (!name || !price || !category ) {
         throw new ApiError(400, "Product name, image, price, category, and Frenchies are required");
@@ -30,6 +33,10 @@ export const createProduct=asyncHandler(async(req,res)=>{
     if(!image.url){
         throw new ApiError(400,"image upload failed")
     }
+    const toppingsArray = toppings
+    ? toppings.split(',').map(t => t.trim()).filter(t => t.length > 0)
+    : [];
+
     const product = await Product.create({
         name,
         description,
@@ -38,6 +45,7 @@ export const createProduct=asyncHandler(async(req,res)=>{
         stock,
         category,
         discountCoupon,
+        toppings:toppingsArray,
         Frenchies:frenchiesId,
     });
 
@@ -92,6 +100,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
         "price",
         "stock",
         "category",
+        "toppings"
         
     ];
 
@@ -190,13 +199,13 @@ export const getProductById = asyncHandler(async (req, res) => {
 
 
 export const getNearbyProducts = asyncHandler(async (req, res) => {
-  const { lat, lng } = req.query;
+  const { lat, lng, keyword } = req.query;
 
   if (!lat || !lng) {
     throw new ApiError(400, "Latitude and Longitude are required");
   }
 
-  const searchRadii = [3000, 5000, 7000, 10000]; // in meters (3 km, 5 km, etc.)
+  const searchRadii = [3000, 5000, 7000, 10000]; // in meters
   let finalProducts = [];
 
   for (let radius of searchRadii) {
@@ -209,25 +218,41 @@ export const getNearbyProducts = asyncHandler(async (req, res) => {
           },
           distanceField: "distance",
           spherical: true,
-          maxDistance: radius
-        }
-      }
+          maxDistance: radius,
+        },
+      },
     ]);
 
     const frenchyIds = nearbyFrenchies.map(f => f._id);
 
     if (frenchyIds.length > 0) {
-      finalProducts = await Product.find({
-        Frenchies: { $in: frenchyIds } // If you renamed to frenchyId, change here
+      // Step 1: Get all products for nearby frenchies
+      let products = await Product.find({
+        Frenchies: { $in: frenchyIds },
       }).populate("category Frenchies");
+
+      // Step 2: If keyword is present, filter using fuzzy match
+      if (keyword) {
+        const fuzzyResults = fuzzysort.go(keyword, products, {
+          keys: ['name', 'description'],
+          threshold: -10000, // more negative = stricter
+        });
+
+        products = fuzzyResults.map(r => r.obj); // Extract matched products
+      }
+
+      finalProducts = products;
     }
 
-    if (finalProducts.length > 0) break; // If products found, stop loop
+    if (finalProducts.length > 0) break;
   }
 
   if (finalProducts.length === 0) {
-    return res.status(404).json(new ApiResponse(404, [], "No nearby products found"));
+    return res
+      .status(404)
+      .json(new ApiResponse(404, [], "No nearby products found"));
   }
 
   res.status(200).json(new ApiResponse(200, finalProducts));
 });
+

@@ -21,10 +21,11 @@ const orderSchema = new mongoose.Schema({
         ref: "Frenchies",
         required: true,
     },
-    // deliveryBoyId: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "DeliveryBoy",
-    // },
+    deliveryBoyId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "DeliveryBoy",
+    },
+    
     orderItems: [
         {
             productId: {
