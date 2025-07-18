@@ -209,7 +209,7 @@ export const getNearbyProducts = asyncHandler(async (req, res) => {
   let finalProducts = [];
 
   for (let radius of searchRadii) {
-    const nearbyFrenchies = await Frenchies.aggregate([
+    const nearbyFrenchiesWithProducts = await Frenchies.aggregate([
       {
         $geoNear: {
           near: {
@@ -221,30 +221,41 @@ export const getNearbyProducts = asyncHandler(async (req, res) => {
           maxDistance: radius,
         },
       },
+      {
+        $lookup: {
+          from: "products", // NOTE: this should match your actual MongoDB collection name
+          localField: "_id",
+          foreignField: "Frenchies",
+          as: "products",
+        },
+      },
+      {
+        $unwind: "$products",
+      },
+      ...(keyword
+        ? [
+            {
+              $match: {
+                $or: [
+                  { "products.name": { $regex: keyword, $options: "i" } },
+                  { "products.description": { $regex: keyword, $options: "i" } },
+                ],
+              },
+            },
+          ]
+        : []),
+      {
+        $replaceRoot: { newRoot: "$products" },
+      },
+      {
+        $limit: 50, // optional: limit for performance
+      },
     ]);
 
-    const frenchyIds = nearbyFrenchies.map(f => f._id);
-
-    if (frenchyIds.length > 0) {
-      // Step 1: Get all products for nearby frenchies
-      let products = await Product.find({
-        Frenchies: { $in: frenchyIds },
-      }).populate("category Frenchies");
-
-      // Step 2: If keyword is present, filter using fuzzy match
-      if (keyword) {
-        const fuzzyResults = fuzzysort.go(keyword, products, {
-          keys: ['name', 'description'],
-          threshold: -10000, // more negative = stricter
-        });
-
-        products = fuzzyResults.map(r => r.obj); // Extract matched products
-      }
-
-      finalProducts = products;
+    if (nearbyFrenchiesWithProducts.length > 0) {
+      finalProducts = nearbyFrenchiesWithProducts;
+      break;
     }
-
-    if (finalProducts.length > 0) break;
   }
 
   if (finalProducts.length === 0) {
